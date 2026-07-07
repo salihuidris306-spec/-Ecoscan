@@ -1,124 +1,117 @@
 import streamlit as st
 import time
 
-# Set up page styling
-st.set_page_config(page_title="EcoScan Health Assistant", page_icon="🏥", layout="centered")
+# Set up app title and configuration
+st.set_page_config(page_title="EcoScan Health Assistant", page_icon="🏥")
+st.title("🏥 EcoScan Rural Health Assistant")
+st.write("---")
 
-# Initialize "session state" to remember data across pages
-if "page" not in st.session_state:
-    st.session_state.page = 1
-if "user_name" not in st.session_state:
-    st.session_state.user_name = ""
-if "user_address" not in st.session_state:
-    st.session_state.user_address = ""
+# Initialize session state to manage step-by-step navigation
+if 'step' not in st.session_state:
+    st.session_state.step = 1
 
-# --- PAGE 1: REGISTRATION FACE PAGE ---
-if st.session_state.page == 1:
-    st.title("🏥 EcoScan Rural Health Assistant")
+# ----------------- STEP 1: PATIENT REGISTRATION -----------------
+if st.session_state.step == 1:
     st.subheader("Step 1: Patient Registration")
     st.write("Please enter your personal details below.")
     
-    # Input fields
-    name = st.text_input("Full Name", value=st.session_state.user_name)
-    address = st.text_input("Home Address", value=st.session_state.user_address)
+    name = st.text_input("Full Name")
+    address = st.text_input("Home Address")
     
-    # Next Button
     if st.button("Proceed to Medical Assessment ➡️"):
         if name and address:
-            st.session_state.user_name = name
-            st.session_state.user_address = address
-            st.session_state.page = 2
+            st.session_state.name = name
+            st.session_state.address = address
+            st.session_state.step = 2
             st.rerun()
         else:
-            st.error("Please fill in both your Name and Address before moving forward.")
+            st.error("Please enter your name and address before proceeding.")
 
-# --- PAGE 2: MEDICAL ASSESSMENT & DIAGNOSIS ---
-elif st.session_state.page == 2:
-    st.title("🏥 Medical Assessment Screen")
-    st.write(f"**Patient:** {st.session_state.user_name} | **Address:** {st.session_state.user_address}")
-    st.markdown("---")
+# ----------------- STEP 2: SYMPTOMS ASSESSMENT -----------------
+elif st.session_state.step == 2:
+    st.subheader(f"Step 2: Symptoms Assessment (Patient: {st.session_state.name})")
+    st.write("Please describe what you are feeling in detail.")
     
-    # 1. Fingerprint Simulation
-    st.subheader("📌 Step 2: Biometric Verification")
-    if "fingerprint_done" not in st.session_state:
-        st.session_state.fingerprint_done = False
-        
-    if not st.session_state.fingerprint_done:
-        if st.button("👍 Click here to Scan Thumbprint"):
-            with st.spinner("Scanning thumbprint... please hold still..."):
-                time.sleep(2) # Simulates a real scan delay
-            st.session_state.fingerprint_done = True
+    symptoms = st.text_area("What symptoms are you experiencing? (e.g., Fever, Headache, Cough...)")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("⬅️ Go Back"):
+            st.session_state.step = 1
             st.rerun()
-    else:
-        st.success("✅ Thumbprint scanned and verified successfully!")
-
-    st.markdown("---")
-    
-    # 2. Symptom Inputs
-    st.subheader("🩺 Step 3: Tell Us How You Feel")
-    symptoms = st.text_input("What primary symptoms are you feeling? (e.g., fever, headache, cough)")
-    extra_info = st.text_area("Add more information about your sickness:")
-    
-    # 3. Submit and Diagnosis Logic
-    if st.button("Submit for Diagnosis 🧪"):
-        if not st.session_state.fingerprint_done:
-            st.error("Please scan your thumbprint first!")
-        elif not symptoms:
-            st.error("Please specify at least one symptom.")
-        else:
-            st.subheader("📋 Diagnostic Results & Medical Advice")
-            with st.spinner("Analyzing your symptoms..."):
-                time.sleep(1.5)
-            
-            # Simple rules to diagnose based on what the user types
-            text_to_check = (symptoms + " " + extra_info).lower()
-            
-            if "fever" in text_to_check and "chills" in text_to_check:
-                st.warning("⚠️ **Potential Diagnosis:** Symptoms point toward Malaria.")
-                st.info("""
-                **💡 Health Advice for Malaria:**
-                * **Immediate Action:** Please visit the nearest clinic or hospital for a proper rapid diagnostic test (RDT) or blood smear.
-                * **Medication:** If confirmed, use approved anti-malarial medications (like ACTs) as prescribed by a doctor. Complete the full dose!
-                * **Rest & Fluids:** Drink plenty of clean water to stay hydrated and get adequate rest.
-                * **Prevention:** Sleep under a treated mosquito net and clear stagnant water around your home.
-                """)
-                
-            elif "cough" in text_to_check or "catarrh" in text_to_check or "flu" in text_to_check:
-                st.info("ℹ️ **Potential Diagnosis:** Symptoms suggest a Common Cold or Respiratory Infection.")
-                st.info("""
-                **💡 Health Advice for Cold/Flu:**
-                * **Rest:** Allow your body to rest so your immune system can fight the virus.
-                * **Hydration:** Drink warm liquids like tea or soup to soothe your throat and break up congestion.
-                * **Medication:** You can take mild pain relievers (like Paracetamol) to reduce headache or mild fever if needed.
-                * **Hygiene:** Cover your mouth when coughing and wash your hands often to protect others.
-                """)
-                
-            elif "stomach" in text_to_check or "diarrhea" in text_to_check:
-                st.warning("⚠️ **Potential Diagnosis:** Symptoms suggest Food Poisoning or a Stomach Infection.")
-                st.info("""
-                **💡 Health Advice for Stomach Infection:**
-                * **Stay Hydrated:** This is critical. Drink Oral Rehydration Salts (ORS) or clean water mixed with a little salt and sugar to replace lost fluids.
-                * **Diet:** Eat bland, easy-to-digest foods like bananas, rice, or porridge. Avoid oily, spicy, or heavy foods.
-                * **Hygiene:** Ensure all food and water are properly cooked and boiled. Wash hands before eating.
-                * **When to see a doctor:** If the diarrhea lasts more than 2 days or you see blood, go to a clinic immediately.
-                """)
-                
+    with col2:
+        if st.button("Proceed to Vital Scan ➡️"):
+            if symptoms:
+                st.session_state.symptoms = symptoms
+                st.session_state.step = 3
+                st.rerun()
             else:
-                st.success("✅ **Analysis:** Symptoms are unclear.")
-                st.info("""
-                **💡 General Health Advice:**
-                * Because the symptoms provided are general, we cannot pin down a specific condition.
-                * Please monitor how you feel over the next 24 hours.
-                * If you feel worse, develop a high fever, or experience sudden pain, please travel to the closest health center or talk to a local community nurse.
-                """)
-                
-    st.markdown("---")
+                st.error("Please write down your symptoms before proceeding.")
+
+# ----------------- STEP 3: SCANNER & DIAGNOSIS -----------------
+elif st.session_state.step == 3:
+    st.subheader("Step 3: Biometric Vital Scan")
     
-    # 4. Home Button to Go Back
-    if st.button("🏠 Return to Home Page"):
-        # Reset everything back to the beginning
-        st.session_state.page = 1
-        st.session_state.user_name = ""
-        st.session_state.user_address = ""
-        st.session_state.fingerprint_done = False
+    st.warning("⚠️ **Instruction:** Please place your finger on your screen or device sensor to scan your vitals, body temperature, and pulse.")
+    
+    # Visual representation of the scanner
+    st.markdown("""
+    <div style="background-color:#1e293b; border: 3px solid #00ffcc; border-radius: 50%; width: 150px; height: 150px; margin: 20px auto; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 15px #00ffcc;">
+        <span style="color:#00ffcc; font-size: 40px; font-weight: bold; animation: pulse 1.5s infinite;">🔴</span>
+    </div>
+    <p style="text-align: center; color: #00ffcc; font-weight: bold;">[ PLACE YOUR FINGER HERE ]</p>
+    """, unsafe_allow_html=True)
+    
+    if st.button("Start Scanning 🧬"):
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        for percent_complete in range(100):
+            time.sleep(0.03)
+            progress_bar.progress(percent_complete + 1)
+            status_text.text(f"Scanning body vitals: {percent_complete + 1}%")
+        
+        status_text.success("Scan completed successfully! ✅")
+        st.write("---")
+        
+        # AI Diagnosis Logic
+        st.subheader("📋 Medical Diagnosis Results")
+        
+        symptoms_lower = st.session_state.symptoms.lower()
+        
+        # Checking symptoms to match with a diagnosis
+        if "fever" in symptoms_lower or "zazzabi" in symptoms_lower or "hot" in symptoms_lower:
+            illness = "Malaria Fever"
+            advice = """
+            1. **Medication:** Consult a healthcare professional or community health worker for recommended antimalarial treatment (like ACT).
+            2. **Rest & Hydration:** Get plenty of bed rest and drink clean, safe water regularly.
+            3. **Prevention:** Sleep under a treated mosquito net and ensure your surroundings are free from stagnant water.
+            """
+        elif "headache" in symptoms_lower or "ciwon kai" in symptoms_lower:
+            illness = "Stress or Elevated Blood Pressure"
+            advice = """
+            1. **Rest:** Lie down in a quiet, cool, and dark room to reduce tension.
+            2. **Hydration:** Drink 2 to 3 glasses of water immediately.
+            3. **Monitoring:** If the headache persists, please get your Blood Pressure (BP) checked at the nearest health center.
+            """
+        elif "diarrhea" in symptoms_lower or "gudawa" in symptoms_lower or "zawo" in symptoms_lower:
+            illness = "Gastroenteritis / Watery Stool"
+            advice = """
+            1. **Rehydration:** Drink Oral Rehydration Salts (ORS) or a salt-sugar solution immediately to replace lost fluids.
+            2. **Diet:** Avoid oily, spicy, or heavy foods. Stick to light meals like porridge or bananas.
+            3. **Hygiene:** Ensure strict handwashing with soap and clean water before meals.
+            """
+        else:
+            illness = "General Body Fatigue or Mild Viral Infection"
+            advice = """
+            1. **Rest:** Your body needs adequate sleep (at least 8 hours).
+            2. **Nutrition:** Eat balanced, nutritious meals and include fresh fruits or vegetables.
+            3. **Follow-up:** If symptoms do not improve within 48 hours, visit the nearest medical clinic.
+            """
+            
+        st.error(f"**Diagnosis Suggests:** The patient might be suffering from: **{illness}**")
+        st.info(f"**Recommendations & Guidelines:** \n{advice}")
+        
+    if st.button("⬅️ Restart New Assessment"):
+        st.session_state.step = 1
         st.rerun()
