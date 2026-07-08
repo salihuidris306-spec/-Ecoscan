@@ -10,12 +10,12 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
 # Custom CSS for a Premium Corporate Medical Theme
 st.markdown("""
     <style>
     ...
     </style>
+
 """, unsafe_allow_html=True)
     <style>
         .reportview-container { background: #fafbfc; }
