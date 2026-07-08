@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ha">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoScan Offline Assistant</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #0056b3; text-align: center; }
+        .sub { text-align: center; font-style: italic; color: #666; font-size: 14px; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background-color: #0056b3; color: white; font-weight: bold; cursor: pointer; border: none; }
+        .result-box { display: none; margin-top: 20px; padding: 15px; border-left: 5px solid #dc3545; background-color: #f8d7da; border-radius: 5px; }
+        .advice { white-space: pre-line; margin-top: 10px; color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🏥 EcoScan Rural Assistant (OFFLINE)</h2>
+    <p class="sub">Wannan shafi yana aiki ne ba tare da data ko intanet ba.</p>
+    <hr>
+    
+    <label>Cikakken Suna:</label>
+    <input type="text" id="name" placeholder="Shigar da suna">
+    
+    <label>Shigar da Alamomin Cuta (Symptoms):</label>
+    <input type="text" id="symptoms" placeholder="Misali: zazzabi, headache, gudawa...">
+    
+    <button onclick="diagnose()">Bincika Cutar</button>
+    
+    <div id="resultBox" class="result-box">
+        <strong id="diagnosisTitle" style="font-size: 18px; color: #721c24;"></strong>
+        <div id="adviceText" class="advice"></div>
+        <button onclick="restart()" style="background-color: #6c757d; margin-top: 15px;">Sake Sabon Bincike</button>
+    </div>
+</div>
+
+<script>
+function diagnose() {
+    let symptoms = document.getElementById('symptoms').value.toLowerCase();
+    let illness = "";
+    let advice = "";
+    
+    if (symptoms.includes("zazzabi") || symptoms.includes("malaria") || symptoms.includes("fever")) {
+        illness = "Zazzabin Malaria (Malaria Fever)";
+        advice = "1. **Magani:** Nemi shawarar likita ko masani kan maganin malaria.\n2. **Hutu:** A sha ruwa sosai kuma a yi hutu.\n3. **Rigakafi:** A kwanta a cikin gidan sauro mai magani.";
+    } else if (symptoms.includes("headache") || symptoms.includes("ciwon kai")) {
+        illness = "Gajiya ko Hawan Jini (Stress / Elevated BP)";
+        advice = "1. **Hutu:** Kwanta a wuri mai natsuwa da sanyi.\n2. **Ruwa:** Sha ruwa kofi 2 zuwa 3.\n3. **Lura:** Idan ciwon kai ya ƙi tsayawa, a duba jini.";
+    } else if (symptoms.includes("gudawa") || symptoms.includes("amai") || symptoms.includes("diarrhea")) {
+        illness = "Ciwon Ciki / Gudawa (Gastroenteritis)";
+        advice = "1. **Ruwan Gishiri da Suga:** Sha ruwan ORS akai-akai.\n2. **Abinci:** Guji abinci mai yaji ko mai kitse.\n3. **Tsafta:** Wanke hannaye da sabulu akai-akai.";
+    } else {
+        illness = "Gajiyar Jini ko Murkushewar Jiki (General Body Fatigue)";
+        advice = "1. **Hutu:** Jikinka yana buƙatar isasshen barci.\n2. **Abinci:** Ci abinci mai gina jiki.\n3. **Lura:** Idan ba a sami sauƙi ba, a tuntuɓi babban asibiti.";
+    }
+    
+    document.getElementById('diagnosisTitle').innerText = "Sakamako: " + illness;
+    document.getElementById('adviceText').innerText = "Shawarwari:\n" + advice;
+    document.getElementById('resultBox').style.display = "block";
+}
+
+function restart() {
+    document.getElementById('name').value = "";
+    document.getElementById('symptoms').value = "";
+    document.getElementById('resultBox').style.display = "none";
+}
+</script>
+
+</body>
+</html>
