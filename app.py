@@ -14,6 +14,10 @@ st.set_page_config(
 # Custom CSS for a Premium Corporate Medical Theme
 st.markdown("""
     <style>
+    ...
+    </style>
+""", unsafe_allow_html=True)
+    <style>
         .reportview-container { background: #fafbfc; }
         h1 { color: #1e4620 !important; font-family: 'Arial', sans-serif; text-align: center; }
         h2, h3 { color: #2e7d32 !important; }
