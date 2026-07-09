@@ -11,16 +11,17 @@ DATABASE_FILE = "ecoscan_records.csv"
 def load_patient_records():
     if os.path.exists(DATABASE_FILE):
         return pd.read_csv(DATABASE_FILE)
-    return pd.DataFrame(columns=["ID", "Name", "Residential Address", "Symptoms / Complaints", "Time"])
+    # Return a clean starting point with real-world column names
+    return pd.DataFrame(columns=["Patient ID", "Full Name", "Residential Address", "Diagnostic Analysis Log", "Timestamp"])
 
 def save_patient_record(p_id, name, address, symptoms):
     df_existing = load_patient_records()
     new_data = pd.DataFrame([{
-        "ID": p_id,
-        "Name": name,
+        "Patient ID": p_id,
+        "Full Name": name,
         "Residential Address": address,
-        "Symptoms / Complaints": symptoms,
-        "Time": time.strftime("%Y-%m-%d %H:%M:%S")
+        "Diagnostic Analysis Log": symptoms,
+        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
     }])
     df_combined = pd.concat([df_existing, new_data], ignore_index=True)
     df_combined.to_csv(DATABASE_FILE, index=False)
@@ -35,7 +36,7 @@ if "patient_address" not in st.session_state:
 if "symptoms" not in st.session_state:
     st.session_state.symptoms = ""
 
-# --- 2. DESIGN STYLING ---
+# --- 2. PREMIUM CSS DESIGN STYLING ---
 st.markdown(
     """
     <style>
@@ -141,16 +142,18 @@ def analyze_symptoms(symptoms_text):
             "color_class": "metric-value-accent",
             "chart_data": [20, 38, 29, 48, 56, 42, 68, 32],
             "advice": """
-                - **Assessment:** Your current biometric parameters and reported inputs align within acceptable healthy baseline metrics. 
-                - **Maintenance Advice:** Continue eating balanced meals, drink at least 3 liters of water daily, and aim for 7-8 hours of sound sleep.
+                - **Assessment:** Your current biometric parameters align within acceptable healthy baseline metrics. 
+                - **Maintenance Advice:** Continue eating balanced meals, drink water, and aim for 7-8 hours of sound sleep.
             """
         }
 
 patient_id = f"ES-{st.session_state.patient_name[:2].upper() if len(st.session_state.patient_name) > 2 else '88'}21"
 
 # ==========================================
-# PAGE 1: OPENING PAGE
+# PAGE MAIN NAVIGATION SCREENS
 # ==========================================
+
+# PAGE 1: OPENING PAGE
 if st.session_state.page == 1:
     st.markdown(
         """
@@ -178,9 +181,7 @@ if st.session_state.page == 1:
     if st.button("Get Started / Enter App 🚀"):
         go_to_page(2)
 
-# ==========================================
 # PAGE 2: PATIENT REGISTRATION FORM
-# ==========================================
 elif st.session_state.page == 2:
     st.markdown("<h2 style='color:#1E5E3A;'>📝 Page 2: Patient Registration Form</h2>", unsafe_allow_html=True)
     
@@ -197,9 +198,7 @@ elif st.session_state.page == 2:
             else:
                 st.error("⚠️ Please enter Name and Address before you proceed.")
 
-# ==========================================
 # PAGE 3: PATIENT ILLNESS DETAILS
-# ==========================================
 elif st.session_state.page == 3:
     st.markdown("<h2 style='color:#1E5E3A;'>🏥 Page 3: Body Condition Details</h2>", unsafe_allow_html=True)
     st.info(f"📋 Patient: {st.session_state.patient_name}")
@@ -207,7 +206,7 @@ elif st.session_state.page == 3:
     st.session_state.symptoms = st.text_area(
         "What are you feeling in your body regarding this illness?",
         value=st.session_state.symptoms,
-        placeholder="Example: Headache, Fever, Cough, Malaria symptoms..."
+        placeholder="Example: Headache, Fever, Cough..."
     )
     
     col1, col2 = st.columns(2)
@@ -218,9 +217,7 @@ elif st.session_state.page == 3:
             if st.session_state.symptoms.strip(): go_to_page(4)
             else: st.error("Please write what you are feeling in your body.")
 
-# ==========================================
-# PAGE 4: SCANNING INTERFACE (BIOMETRIC ONLY)
-# ==========================================
+# PAGE 4: SCANNING INTERFACE
 elif st.session_state.page == 4:
     st.markdown("<h2 style='color:#1E5E3A;'>🧬 Page 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
     st.write("Touch the circle below to start scanning.")
@@ -253,9 +250,7 @@ elif st.session_state.page == 4:
             time.sleep(0.5)
             go_to_page(5)
 
-# ==========================================
 # PAGE 5: DIAGNOSTIC DASHBOARD & RESULTS
-# ==========================================
 elif st.session_state.page == 5:
     diagnosis = analyze_symptoms(st.session_state.symptoms)
 
@@ -302,34 +297,35 @@ elif st.session_state.page == 5:
         if st.button("💾 Save To Permanent Records"):
             detailed_complaint = f"[{diagnosis['disease']}] {st.session_state.symptoms}"
             save_patient_record(patient_id, st.session_state.patient_name, st.session_state.patient_address, detailed_complaint)
-            st.success("✅ Saved to the Database!")
+            st.success("✅ Saved to the Central Database Table below!")
+            time.sleep(1)
+            st.rerun()
             
     with col_btn2:
         if st.button("🏠 Start New Scan / Home"):
             reset_app()
 
+
 # ==========================================
-# SIDEBAR: HISTORY DATABASE (CLEAN LIST FORMAT)
+# 🗂️ MAIN CONTENT: LIVE PATIENT HISTORY LOG TABLE
 # ==========================================
-st.sidebar.markdown("### 🗂️ Patient Registry List")
+st.markdown("---")
+st.markdown("## 🗂️ Central Patient Registry Logbook")
+st.write("This table is a live database rendering directly on the screen. Any entries saved will appear here instantly.")
 
 records_df = load_patient_records()
 
 if not records_df.empty:
-    # Loop and output as a clean text list
-    for idx, row in records_df.iterrows():
-        st.sidebar.markdown(
-            f"**{idx+1}.** {row['Name']} ({row['ID']})  \n"
-            f"📍 {row['Residential Address']}  \n"
-            f"🩺 {row['Symptoms / Complaints']}  \n"
-            f"⏱️ {row['Time']}"
-        )
-        st.sidebar.markdown("---") # Simple clean line breaks between list items
-        
-    if st.sidebar.button("🗑️ Clear List"):
+    # Display the real spreadsheet database log right on the main screen!
+    st.dataframe(records_df, use_container_width=True)
+    
+    st.write("")
+    # Clear button right underneath it
+    if st.button("🗑️ Wipe Registry Records Table"):
         if os.path.exists(DATABASE_FILE):
             os.remove(DATABASE_FILE)
-            st.sidebar.success("Registry cleared!")
+            st.success("Database records wiped clean!")
+            time.sleep(0.5)
             st.rerun()
 else:
-    st.sidebar.info("No records inside the list yet.")
+    st.info("The medical history ledger is currently empty. Complete a diagnostic check and click 'Save To Permanent Records' to populate this spreadsheet.")
