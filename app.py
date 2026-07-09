@@ -42,7 +42,6 @@ if st.session_state.page == "Home":
     # Lead Developer Profile Section
     col1, col2 = st.columns([1, 2])
     with col1:
-        # Tries to load your custom photo from GitHub repo; falls back to avatar icon if not uploaded yet
         if os.path.exists("profile.jpg"):
             st.image("profile.jpg", width=160, caption="Lead Developer")
         else:
@@ -110,12 +109,12 @@ elif st.session_state.page == "Symptoms":
             else:
                 st.error("⚠️ Please describe the symptoms!")
 
-# ----------------- PAGE 4: BIOMETRIC SCANNER (ROUNDED DESIGN) -----------------
+# ----------------- PAGE 4: AUTOMATIC BIOMETRIC SCANNER -----------------
 elif st.session_state.page == "Scanning":
     st.title("🧬 EcoScan Biometric Simulation")
-    st.write("Place your finger on the circular scanner pad below to capture vital signs.")
+    st.write("Place your finger on the circular pad. Scanning starts automatically...")
     
-    # Custom CSS for a PERFECTLY ROUNDED/CIRCULAR glowing fingerprint container
+    # Custom CSS for a rounded scanner container with an animated up-and-down laser line
     st.markdown("""
         <style>
         .scanner-circle {
@@ -135,43 +134,45 @@ elif st.session_state.page == "Scanning":
         }
         .fingerprint-design {
             font-size: 75px;
-            cursor: pointer;
             user-select: none;
-            animation: pulse-effect 1.5s infinite alternate;
         }
-        @keyframes pulse-effect {
-            from { transform: scale(0.95); opacity: 0.7; }
-            to { transform: scale(1.05); opacity: 1; }
+        .laser-line {
+            width: 100%;
+            height: 4px;
+            background-color: #FF0055;
+            position: absolute;
+            box-shadow: 0 0 15px #FF0055;
+            animation: scanning 1.5s infinite ease-in-out;
+        }
+        @keyframes scanning {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
         }
         </style>
         <div class="scanner-circle">
+            <div class="laser-line"></div>
             <div class="fingerprint-design">☝️🏽</div>
-            <div style="color: #00E6FF; font-size: 11px; font-weight: bold; font-family: monospace; letter-spacing: 1px;">SCAN PAD</div>
+            <div style="color: #00E6FF; font-size: 11px; font-weight: bold; font-family: monospace; letter-spacing: 1px; z-index: 2;">SCANNING...</div>
         </div>
     """, unsafe_allow_html=True)
     
-    scan_placeholder = st.empty()
-    finger_placed = st.checkbox("👉 SIMULATE FINGER PLACEMENT (TOUCH PAD)")
+    # Automatically triggers progress bar animation instantly on page load
+    st.info("🔄 Biometric contact established. Analyzing body temperature, pulse rate, and biomarkers...")
+    progress_bar = st.progress(0)
     
-    if finger_placed:
-        with scan_placeholder.container():
-            st.info("🔄 Biometric contact detected! Synchronizing vitals and data...")
-            progress_bar = st.progress(0)
-            for percent_complete in range(100):
-                time.sleep(0.03)  
-                progress_bar.progress(percent_complete + 1)
-            st.success("✅ Vital signs captured successfully!")
-            
-        if st.button("View Diagnostic Results & Advice ➡️", use_container_width=True):
-            st.session_state.page = "Results"
-            st.rerun()
-    else:
-        st.warning("Awaiting biometric input... Please check the box above.")
-        if st.button("⬅️ Back"):
-            st.session_state.page = "Symptoms"
-            st.rerun()
+    for percent_complete in range(100):
+        time.sleep(0.04)  # Total 4 seconds scanning time animation
+        progress_bar.progress(percent_complete + 1)
+        
+    st.success("✅ Fingerprint, Pulse, and Vital Signs Scanned Successfully!")
+    time.sleep(1.2) # Give a brief second for them to look at success message
+    
+    # Go straight to the results automatically without clicking anything else
+    st.session_state.page = "Results"
+    st.rerun()
 
-# ----------------- PAGE 5: SMART DIAGNOSTIC RESULTS & MEDICAL ADVICE -----------------
+# ----------------- PAGE 5: DIRECT STRATEGIC DIAGNOSTIC RESULTS -----------------
 elif st.session_state.page == "Results":
     st.title("🏥 Diagnostic Insights & Expert Medical Advice")
     st.markdown(f"**Patient Name:** {st.session_state.patient_name}")
@@ -181,41 +182,41 @@ elif st.session_state.page == "Results":
     text_lower = st.session_state.symptoms.lower()
     st.subheader("🔍 Preliminary Analysis:")
     
-    # ADVANCED MULTI-DISEASE DETECTION ENGINE
+    # DIRECT AND STRAIGHTFORWARD CONDITION MATCHING
     if "fever" in text_lower or "headache" in text_lower or "zazzabi" in text_lower or "chills" in text_lower:
-        st.warning("⚠️ High Clinical Correlation: Suspicion of Malaria or Acute Bacterial Infection.")
+        st.error("🚨 Condition Confirmed: Malaria Infection.")
         st.subheader("💡 Recommended Medical Advice:")
         st.write("""
-        1. **Laboratory Confirmation:** Undergo a blood smear microscopy or Rapid Diagnostic Test (RDT) for Malaria.
-        2. **Hydration Management:** Consume increased volumes of fluids to counteract thermal perspiration.
-        3. **Therapeutic Action:** Administer Antipyretics (e.g., Paracetamol) for symptomatic pyrexia management, and consult a physician for appropriate ACT prescription if positive.
+        1. **Medical Testing:** Get a laboratory Blood Smear Microscopy test for Malaria parasite calculation immediately.
+        2. **Treatment Protocol:** Use approved Artemisinin-based Combination Therapy (ACT) medications as directed by a healthcare official.
+        3. **Hydration Care:** Increase fluid intake immediately to manage elevated body temperature.
         """)
         
     elif "cough" in text_lower or "flu" in text_lower or "catar" in text_lower or "throat" in text_lower:
-        st.warning("⚠️ High Clinical Correlation: Respiratory Tract Irritation / Viral Upper Respiratory Infection.")
+        st.error("🚨 Condition Confirmed: Respiratory Tract Infection.")
         st.subheader("💡 Recommended Medical Advice:")
         st.write("""
-        1. **Respiratory Support:** Practice warm saline gargles and stay in well-ventilated spaces.
-        2. **Symptomatic Relief:** Use over-the-counter expectorants or mucolytics if congestion worsens.
-        3. **Red Flags:** Seek immediate critical attention if breathing difficulty or chest retraction develops.
+        1. **Airway Management:** Perform regular warm water saline gargles to reduce throat inflammation.
+        2. **Symptomatic Control:** Administer direct doctor-approved expectorants or cough suppressants.
+        3. **Isolation Check:** Wear a protective medical mask to curb spreading the airborne respiratory viral load.
         """)
         
     elif "stomach" in text_lower or "vomit" in text_lower or "diarrhea" in text_lower or "typhoid" in text_lower:
-        st.warning("⚠️ High Clinical Correlation: Gastrointestinal Infection / Potential Food Poisoning or Gastroenteritis.")
+        st.error("🚨 Condition Confirmed: Gastrointestinal Food Poisoning.")
         st.subheader("💡 Recommended Medical Advice:")
         st.write("""
-        1. **Electrolyte Replacement:** Administer Oral Rehydration Salts (ORS) instantly to avoid systemic dehydration.
-        2. **Dietary Changes:** Maintain a bland diet (BRAT protocol) and strictly avoid oily, spiced food elements.
-        3. **Clinical Testing:** A stool analysis or Widal test is recommended if condition persists beyond 48 hours.
+        1. **Dehydration Control:** Drink Oral Rehydration Salts (ORS) solution immediately to restore lost electrolytes.
+        2. **Dietary Restriction:** Restrict feeding to a soft, completely bland diet; strictly avoid fatty or heavily spiced food items.
+        3. **Clinical Testing:** Run a Widal Test and stool culture analysis if conditions remain unchanged within 24 hours.
         """)
         
     else:
-        st.info("ℹ️ Baseline Assessment: General physiological fatigue or unspecified low-grade viral prodrome.")
+        st.warning("⚠️ Condition Confirmed: Severe Physiological Fatigue & Weakness.")
         st.subheader("💡 Recommended Medical Advice:")
         st.write("""
-        1. **Rest Optimization:** Ensure complete physical rest and a minimum of 8 hours of quality sleep.
-        2. **Nutritional Reinforcement:** Boost immune health by consuming fresh fruits and micronutrient-dense items.
-        3. **Monitoring Protocol:** Record core metrics regularly. If local localized symptoms arise, schedule a clinical checkup.
+        1. **Rest Recovery:** Observe a full, strict 8 hours of complete bedtime rest and zero strenuous tasks.
+        2. **Immune Boosting:** Consume vital micro-nutrients, water, and fresh natural fruits to restore cellular energy levels.
+        3. **Observation:** If specific pain areas surface, log them directly for medical review.
         """)
         
     st.markdown("---")
