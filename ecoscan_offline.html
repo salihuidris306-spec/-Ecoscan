@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>EcoScan Offline</title>
+    <!-- Load the Stlite browser engine (Requires internet just for the very first setup) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.39.0/build/stlite.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.39.0/build/stlite.js"></script>
+    <script>
+      stlite.mount({
+        requirements: [], // No heavy libraries needed
+        files: {
+          "app.py": `
+import streamlit as st
+import time
+
+st.set_page_config(page_title="EcoScan Offline", page_icon="🏥")
+st.title("🏥 EcoScan Offline")
+st.write("Rural Diagnostic Medical Assistant (No Internet Required)")
+
+if "step" not in st.session_state:
+    st.session_state.step = "Registration"
+
+if st.session_state.step == "Registration":
+    st.subheader("📋 Patient Registration")
+    full_name = st.text_input("Patient Name")
+    age = st.number_input("Age", min_value=0, max_value=120, value=25)
+    gender = st.selectbox("Gender", ["Select", "Male", "Female", "Other"])
+    symptoms = st.text_area("Symptoms Description")
+    
+    if st.button("Proceed to Diagnostics"):
+        if full_name and gender != "Select" and symptoms:
+            st.session_state.name = full_name
+            st.session_state.age = age
+            st.session_state.gender = gender
+            st.session_state.symptoms = symptoms
+            st.session_state.step = "Scanning"
+            st.rerun()
+        else:
+            st.error("Please fill all details.")
+
+elif st.session_state.step == "Scanning":
+    st.subheader(f"🧬 Scanning: {st.session_state.name}")
+    if st.button("Run Offline Diagnostics"):
+        progress_bar = st.progress(0)
+        for p in range(0, 101, 25):
+            time.sleep(0.5)
+            progress_bar.progress(p)
+        st.success("Analysis Complete!")
+        st.session_state.step = "Results"
+        st.rerun()
+
+elif st.session_state.step == "Results":
+    st.subheader("📊 Diagnostic Summary")
+    st.write(f"**Patient:** {st.session_state.name} ({st.session_state.age} Y/O)")
+    st.write(f"**Symptoms:** {st.session_state.symptoms}")
+    st.warning("⚠️ Offline Report: Simulation active. System operational.")
+    
+    if st.button("New Registration"):
+        st.session_state.step = "Registration"
+        st.rerun()
+`
+        }
+      }, document.getElementById("root"));
+    </script>
+  </body>
+</html>
