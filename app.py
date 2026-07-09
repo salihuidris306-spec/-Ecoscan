@@ -25,7 +25,7 @@ def save_patient_record(p_id, name, address, symptoms):
     df_combined = pd.concat([df_existing, new_data], ignore_index=True)
     df_combined.to_csv(DATABASE_FILE, index=False)
 
-# INITIALIZE PAGE SYSTEM (1 to 5)
+# INITIALIZE PAGE SYSTEM
 if "page" not in st.session_state:
     st.session_state.page = 1
 if "patient_name" not in st.session_state:
@@ -35,7 +35,7 @@ if "patient_address" not in st.session_state:
 if "symptoms" not in st.session_state:
     st.session_state.symptoms = ""
 
-# --- 2. PREMIUM GREEN DESIGN STYLING (CSS) ---
+# --- 2. DESIGN STYLING ---
 st.markdown(
     """
     <style>
@@ -70,21 +70,6 @@ st.markdown(
         margin-bottom: 5px !important;
         display: block !important;
     }
-    div.stTextInput, div.stTextArea {
-        margin-bottom: 20px !important;
-    }
-    
-    /* Custom Styling for the History List View */
-    .history-list-item {
-        background-color: #ffffff;
-        padding: 12px;
-        border-bottom: 1px solid #E2E8F0;
-        font-size: 14px;
-        color: #2D3748;
-    }
-    .history-list-item:last-child {
-        border-bottom: none;
-    }
     </style>
     """,
     unsafe_allow_html=True
@@ -115,8 +100,8 @@ def analyze_symptoms(symptoms_text):
             "chart_data": [40, 55, 62, 70, 85, 78, 90, 88],
             "advice": """
                 - **Immediate Action:** Get a rapid diagnostic blood test (RDT) at the nearest clinic to confirm.
-                - **Medication:** If confirmed, use prescribed Artemisinin-based Combination Therapy (ACTs) like Lumartem or Coartem under medical guidance. Take Paracetamol for fever management.
-                - **Recovery Support:** Sleep under a treated mosquito net, drink plenty of fluids to fight dehydration, and get absolute bed rest.
+                - **Medication:** If confirmed, use prescribed Artemisinin-based Combination Therapy (ACTs) like Lumartem or Coartem. Take Paracetamol for fever.
+                - **Recovery Support:** Sleep under a treated mosquito net, drink plenty of fluids, and get absolute bed rest.
             """
         }
     elif "typhoid" in text or ("fever" in text and "stomach" in text) or ("fever" in text and "vomit" in text):
@@ -128,23 +113,23 @@ def analyze_symptoms(symptoms_text):
             "color_class": "metric-value-warning",
             "chart_data": [35, 42, 50, 65, 75, 80, 83, 82],
             "advice": """
-                - **Immediate Action:** Medical evaluation via blood culture or Widal test is recommended. Requires target antibiotic therapies.
-                - **Care Guidelines:** Drink only boiled or properly treated pure drinking water. Consume easily digestible light, warm meals.
-                - **Hygiene Plan:** Wash hands rigorously with soap after using restrooms and before any handling of food.
+                - **Immediate Action:** Medical evaluation via blood culture or Widal test is recommended.
+                - **Care Guidelines:** Drink only boiled or properly treated pure drinking water. Consume light, warm meals.
+                - **Hygiene Plan:** Wash hands rigorously with soap after using restrooms and before handling food.
             """
         }
     elif "cough" in text or "catarrh" in text or "flu" in text or "chest" in text:
         return {
-            "disease": "Acute Respiratory Tract Inflammation / Flu",
+            "disease": "Acute Respiratory Inflammation / Flu",
             "status": "Stable",
             "heart_rate": "76 bpm",
             "assessment": "Mild Illness",
             "color_class": "metric-value-warning",
             "chart_data": [25, 30, 45, 55, 60, 58, 62, 76],
             "advice": """
-                - **Immediate Action:** Take warm steam inhalations twice daily to loosen congestion. Use a cough expectorant or lozenges.
-                - **Dietary Boost:** Increase Vitamin C intake through citrus fruits (oranges, lemons) or supplements, and drink warm ginger tea with honey.
-                - **Prevention:** Avoid cold environments and wear a mask in dusty or public areas to limit transmission or airway irritation.
+                - **Immediate Action:** Take warm steam inhalations twice daily to loosen congestion.
+                - **Dietary Boost:** Increase Vitamin C intake through citrus fruits or supplements, and drink warm ginger tea.
+                - **Prevention:** Avoid cold environments and wear a mask in dusty areas.
             """
         }
     else:
@@ -158,7 +143,6 @@ def analyze_symptoms(symptoms_text):
             "advice": """
                 - **Assessment:** Your current biometric parameters and reported inputs align within acceptable healthy baseline metrics. 
                 - **Maintenance Advice:** Continue eating balanced meals, drink at least 3 liters of water daily, and aim for 7-8 hours of sound sleep.
-                - **Notice:** If you develop any sudden symptoms later, log them here immediately or consult your medical officer.
             """
         }
 
@@ -180,23 +164,12 @@ if st.session_state.page == 1:
     
     st.markdown(
         """
-        <div style="display: flex; justify-content: center; margin-bottom: 25px;">
-            <div style="width: 130px; height: 130px; background-color: #E2E8F0; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #1E5E3A;">
-                <span style="color: #4A5568; font-size: 14px; font-weight: bold; text-align: center;">EcoScan<br>Core</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True
-    )
-    
-    st.markdown(
-        """
         <div style="background-color: white; padding: 20px; border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.03); margin-bottom: 30px; border-left: 5px solid #28A745; text-align: center;">
             <h3 style="color: #1E5E3A; margin-top: 0; font-size: 22px;">Developed by: Salihu Idris</h3>
             <p style="color: #4A5568; font-style: italic; font-size: 14px; margin-bottom: 15px;">Participant, Young Innovation Challenge</p>
             <hr style="border: 0; border-top: 1px solid #E2E8F0;">
             <p style="margin: 10px 0 0 0; color: #718096; line-height: 1.6; font-size: 14.5px;">
-                EcoScan is an innovative medical utility application designed to bridge the gap between patients and quick diagnostic assistance. 
-                It features intelligent symptom analysis and digital scanning simulation to provide immediate healthcare advice.
+                EcoScan features intelligent symptom analysis and digital scanning simulation to provide immediate healthcare advice.
             </p>
         </div>
         """, unsafe_allow_html=True
@@ -210,12 +183,10 @@ if st.session_state.page == 1:
 # ==========================================
 elif st.session_state.page == 2:
     st.markdown("<h2 style='color:#1E5E3A;'>📝 Page 2: Patient Registration Form</h2>", unsafe_allow_html=True)
-    st.write("Enter patient details to launch the health assessment.")
     
     st.session_state.patient_name = st.text_input("Full Name of the Patient:", value=st.session_state.patient_name)
     st.session_state.patient_address = st.text_area("Patient Address:", value=st.session_state.patient_address)
     
-    st.write("")
     col1, col2 = st.columns(2)
     with col1:
         if st.button("⬅️ Back To Home"): go_to_page(1)
@@ -227,7 +198,7 @@ elif st.session_state.page == 2:
                 st.error("⚠️ Please enter Name and Address before you proceed.")
 
 # ==========================================
-# PAGE 3: PATIENT ILLNESS DETAILS (SYMPTOMS)
+# PAGE 3: PATIENT ILLNESS DETAILS
 # ==========================================
 elif st.session_state.page == 3:
     st.markdown("<h2 style='color:#1E5E3A;'>🏥 Page 3: Body Condition Details</h2>", unsafe_allow_html=True)
@@ -252,7 +223,7 @@ elif st.session_state.page == 3:
 # ==========================================
 elif st.session_state.page == 4:
     st.markdown("<h2 style='color:#1E5E3A;'>🧬 Page 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
-    st.write("Touch the circle below to start scanning the fingerprint.")
+    st.write("Touch the circle below to start scanning.")
     
     st.markdown(
         """
@@ -297,4 +268,68 @@ elif st.session_state.page == 5:
         """, unsafe_allow_html=True
     )
     
-    row1_col1
+    row1_col1, row1_col2 = st.columns(2)
+    row2_col1, row2_col2 = st.columns(2)
+    
+    with row1_col1:
+        st.markdown('<div class="metric-box"><div class="metric-title">Biometric:</div><div class="metric-value-green">VERIFIED</div></div>', unsafe_allow_html=True)
+    with row1_col2:
+        st.markdown(f'<div class="metric-box"><div class="metric-title">Heart Rate:</div><div class="{diagnosis["color_class"]}">{diagnosis["heart_rate"]}</div></div>', unsafe_allow_html=True)
+    with row2_col1:
+        st.markdown(f'<div class="metric-box"><div class="metric-title">Vitals:</div><div class="{diagnosis["color_class"]}">{diagnosis["status"]}</div></div>', unsafe_allow_html=True)
+    with row2_col2:
+        st.markdown(f'<div class="metric-box"><div class="metric-title">Assessment:</div><div class="{diagnosis["color_class"]}">{diagnosis["assessment"]}</div></div>', unsafe_allow_html=True)
+
+    st.markdown("<h3 style='color:#1E5E3A;'>Biometric Scan Analysis Curve</h3>", unsafe_allow_html=True)
+    st.area_chart(pd.DataFrame(diagnosis["chart_data"], columns=['Vitals Level']), color="#1E5E3A")
+    
+    st.markdown(
+        f"""
+        <div style="background-color: #FFF3CD; padding: 20px; border-radius: 12px; border-left: 6px solid #FFC107; box-shadow: 0px 4px 12px rgba(0,0,0,0.04); margin-bottom: 20px;">
+            <h4 style="color:#856404; margin-top:0; font-size: 18px;">🩺 Detected Condition:</h4>
+            <p style="font-size: 20px; font-weight: bold; color: #1E5E3A; margin: 5px 0;">{diagnosis["disease"]}</p>
+        </div>
+        """, unsafe_allow_html=True
+    )
+
+    st.markdown("<h3 style='color:#1E5E3A;'>📋 Recommended Medical Advice & Care Plan</h3>", unsafe_allow_html=True)
+    st.info(diagnosis["advice"])
+
+    st.write("")
+    col_btn1, col_btn2 = st.columns(2)
+    
+    with col_btn1:
+        if st.button("💾 Save To Permanent Records"):
+            detailed_complaint = f"[{diagnosis['disease']}] {st.session_state.symptoms}"
+            save_patient_record(patient_id, st.session_state.patient_name, st.session_state.patient_address, detailed_complaint)
+            st.success("✅ Saved to the Database!")
+            
+    with col_btn2:
+        if st.button("🏠 Start New Scan / Home"):
+            reset_app()
+
+# ==========================================
+# SIDEBAR: HISTORY DATABASE (CLEAN LIST FORMAT)
+# ==========================================
+st.sidebar.markdown("### 🗂️ Patient Registry List")
+
+records_df = load_patient_records()
+
+if not records_df.empty:
+    # Loop and output as a clean text list
+    for idx, row in records_df.iterrows():
+        st.sidebar.markdown(
+            f"**{idx+1}.** {row['Name']} ({row['ID']})  \n"
+            f"📍 {row['Residential Address']}  \n"
+            f"🩺 {row['Symptoms / Complaints']}  \n"
+            f"⏱️ {row['Time']}"
+        )
+        st.sidebar.markdown("---") # Simple clean line breaks between list items
+        
+    if st.sidebar.button("🗑️ Clear List"):
+        if os.path.exists(DATABASE_FILE):
+            os.remove(DATABASE_FILE)
+            st.sidebar.success("Registry cleared!")
+            st.rerun()
+else:
+    st.sidebar.info("No records inside the list yet.")
