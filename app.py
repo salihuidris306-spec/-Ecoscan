@@ -63,6 +63,18 @@ st.markdown(
         border: none !important;
     }
     .stButton>button:hover { background-color: #144026 !important; }
+    
+    /* Global labels formatting to fix visibility and leveling */
+    label {
+        color: #1E5E3A !important;
+        font-weight: bold !important;
+        font-size: 16px !important;
+        margin-bottom: 5px !important;
+        display: block !important;
+    }
+    div.stTextInput, div.stTextArea {
+        margin-bottom: 20px !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -96,7 +108,6 @@ if st.session_state.page == 1:
         unsafe_allow_html=True
     )
     
-    # Avatar Image Box (Placeholder since there is no photo on your GitHub yet)
     st.markdown(
         """
         <div style="display: flex; justify-content: center; margin-bottom: 25px;">
@@ -140,7 +151,7 @@ elif st.session_state.page == 2:
         if st.button("⬅️ Back To Home"): go_to_page(1)
     with col2:
         if st.button("Next ➡️"):
-            if st.session_state.patient_name and st.session_state.patient_address:
+            if st.session_state.patient_name.strip() and st.session_state.patient_address.strip():
                 go_to_page(3)
             else:
                 st.error("⚠️ Please enter Name and Address before you proceed.")
@@ -163,7 +174,7 @@ elif st.session_state.page == 3:
         if st.button("⬅️ Go Back"): go_to_page(2)
     with col2:
         if st.button("Next ➡️"):
-            if st.session_state.symptoms: go_to_page(4)
+            if st.session_state.symptoms.strip(): go_to_page(4)
             else: st.error("Please write what you are feeling in your body.")
 
 # ==========================================
@@ -286,7 +297,7 @@ if not records_df.empty:
             <div style="background-color: white; padding: 10px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #28A745; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
                 <b>{idx+1}. {row['Name']}</b> ({row['ID']})<br>
                 <small style="color:#4A5568;">📍 {row['Residential Address']}</small><br>
-                <small style="color:#4A5568;">🩺 {row['Symptoms / Complaints'][:20]}...</small><br>
+                <small style="color:#4A5568;">🩺 {str(row['Symptoms / Complaints'])[:20]}...</small><br>
                 <small style="color:#A0AEC0; font-size:10px;">⏱️ {row['Time']}</small>
             </div>
             """, unsafe_allow_html=True
