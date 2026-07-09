@@ -10,16 +10,22 @@ DATABASE_FILE = "ecoscan_records.csv"
 
 def load_patient_records():
     if os.path.exists(DATABASE_FILE):
-        return pd.read_csv(DATABASE_FILE)
+        try:
+            df = pd.read_csv(DATABASE_FILE)
+            # Tace layukan da basu da cikakken suna ko ID don kada su nuna 'None'
+            df = df.dropna(subset=["Full Name", "Patient ID"])
+            return df
+        except:
+            pass
     return pd.DataFrame(columns=["Patient ID", "Full Name", "Residential Address", "Diagnostic Analysis Log", "Timestamp"])
 
 def save_patient_record(p_id, name, address, symptoms):
     df_existing = load_patient_records()
     new_data = pd.DataFrame([{
-        "Patient ID": p_id,
-        "Full Name": name,
-        "Residential Address": address,
-        "Diagnostic Analysis Log": symptoms,
+        "Patient ID": str(p_id),
+        "Full Name": str(name).strip(),
+        "Residential Address": str(address).strip(),
+        "Diagnostic Analysis Log": str(symptoms).strip(),
         "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
     }])
     df_combined = pd.concat([df_existing, new_data], ignore_index=True)
@@ -35,7 +41,7 @@ if "patient_address" not in st.session_state:
 if "symptoms" not in st.session_state:
     st.session_state.symptoms = ""
 
-# Generate Patient ID safely at the top level
+# Generate Patient ID safely at the top level based on valid input
 if st.session_state.patient_name.strip():
     clean_name = "".join(e for e in st.session_state.patient_name if e.isalnum())
     prefix = clean_name[:2].upper() if len(clean_name) >= 2 else "PT"
@@ -286,8 +292,6 @@ elif st.session_state.page == 3:
 # PAGE 4: SCANNING INTERFACE
 elif st.session_state.page == 4:
     st.markdown("<h2 style='color:#1E5E3A;'>🧬 Page 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
-    
-    # Optional Camera component removed to keep scanning purely simulated and cross-platform stable on mobile devices
     st.write("Touch the circle below to start scanning.")
     
     st.markdown(
@@ -388,8 +392,8 @@ if not records_df.empty:
     if st.button("🗑️ Wipe Registry Records Table"):
         if os.path.exists(DATABASE_FILE):
             os.remove(DATABASE_FILE)
-            st.success("Database records wiped clean!")
-            time.sleep(0.5)
-            st.rerun()
+        st.success("Database records wiped clean!")
+        time.sleep(0.5)
+        st.rerun()
 else:
     st.info("The medical history ledger is currently empty. Complete a diagnostic check and click 'Save To Permanent Records' to populate this spreadsheet.")
