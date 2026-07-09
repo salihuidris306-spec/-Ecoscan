@@ -11,16 +11,16 @@ DATABASE_FILE = "ecoscan_records.csv"
 def load_patient_records():
     if os.path.exists(DATABASE_FILE):
         return pd.read_csv(DATABASE_FILE)
-    return pd.DataFrame(columns=["ID", "Suna", "Adireshin Zama", "Abun da ke Damunsa", "Lokaci"])
+    return pd.DataFrame(columns=["ID", "Name", "Residential Address", "Symptoms / Complaints", "Time"])
 
 def save_patient_record(p_id, name, address, symptoms):
     df_existing = load_patient_records()
     new_data = pd.DataFrame([{
         "ID": p_id,
-        "Suna": name,
-        "Adireshin Zama": address,
-        "Abun da ke Damunsa": symptoms,
-        "Lokaci": time.strftime("%Y-%m-%d %H:%M:%S")
+        "Name": name,
+        "Residential Address": address,
+        "Symptoms / Complaints": symptoms,
+        "Time": time.strftime("%Y-%m-%d %H:%M:%S")
     }])
     df_combined = pd.concat([df_existing, new_data], ignore_index=True)
     df_combined.to_csv(DATABASE_FILE, index=False)
@@ -83,7 +83,7 @@ def reset_app():
 patient_id = f"ES-{st.session_state.patient_name[:2].upper() if len(st.session_state.patient_name) > 2 else '88'}21"
 
 # ==========================================
-# SHAFI NA 1: OPENING PAGE (DEVELOPER & WELCOME ONLY)
+# PAGE 1: OPENING PAGE (DEVELOPER & WELCOME ONLY)
 # ==========================================
 if st.session_state.page == 1:
     st.markdown(
@@ -96,7 +96,7 @@ if st.session_state.page == 1:
         unsafe_allow_html=True
     )
     
-    # Avatar Image Box (Placeholder tun da babu hoto a GitHub dinka tukunna)
+    # Avatar Image Box (Placeholder since there is no photo on your GitHub yet)
     st.markdown(
         """
         <div style="display: flex; justify-content: center; margin-bottom: 25px;">
@@ -125,53 +125,53 @@ if st.session_state.page == 1:
         go_to_page(2)
 
 # ==========================================
-# SHAFI NA 2: PATIENT REGISTRATION FORM
+# PAGE 2: PATIENT REGISTRATION FORM
 # ==========================================
 elif st.session_state.page == 2:
-    st.markdown("<h2 style='color:#1E5E3A;'>📝 Shafi na 2: Rijistar Marar Lafiya (Registration)</h2>", unsafe_allow_html=True)
-    st.write("Shigar da bayanan marar lafiya domin kaddamar da binciken lafiya.")
+    st.markdown("<h2 style='color:#1E5E3A;'>📝 Page 2: Patient Registration Form</h2>", unsafe_allow_html=True)
+    st.write("Enter patient details to launch the health assessment.")
     
-    st.session_state.patient_name = st.text_input("Cikakken Sunan Marar Lafiya (Full Name):", value=st.session_state.patient_name)
-    st.session_state.patient_address = st.text_area("Adireshin Marar Lafiya (Address):", value=st.session_state.patient_address)
+    st.session_state.patient_name = st.text_input("Full Name of the Patient:", value=st.session_state.patient_name)
+    st.session_state.patient_address = st.text_area("Patient Address:", value=st.session_state.patient_address)
     
     st.write("")
     col1, col2 = st.columns(2)
     with col1:
         if st.button("⬅️ Back To Home"): go_to_page(1)
     with col2:
-        if st.button("Na Gaba (Next) ➡️"):
+        if st.button("Next ➡️"):
             if st.session_state.patient_name and st.session_state.patient_address:
                 go_to_page(3)
             else:
-                st.error("⚠️ Don Allah shigar da Suna da Adireshi kafin ka ci gaba.")
+                st.error("⚠️ Please enter Name and Address before you proceed.")
 
 # ==========================================
-# SHAFI NA 3: BAYANAN RASHIN LAFIYA (SYMPTOMS)
+# PAGE 3: PATIENT ILLNESS DETAILS (SYMPTOMS)
 # ==========================================
 elif st.session_state.page == 3:
-    st.markdown("<h2 style='color:#1E5E3A;'>🏥 Shafi na 3: Bayanan Yanayin Jiki</h2>", unsafe_allow_html=True)
-    st.info(f"📋 Marar Lafiya: {st.session_state.patient_name}")
+    st.markdown("<h2 style='color:#1E5E3A;'>🏥 Page 3: Body Condition Details</h2>", unsafe_allow_html=True)
+    st.info(f"📋 Patient: {st.session_state.patient_name}")
     
     st.session_state.symptoms = st.text_area(
-        "Menene kake ji a jikinka game da wannan rashin lafiyar?",
+        "What are you feeling in your body regarding this illness?",
         value=st.session_state.symptoms,
-        placeholder="Misali: Ciwon kai, Zazzabi, Tari..."
+        placeholder="Example: Headache, Fever, Cough..."
     )
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("⬅️ Koma Baya"): go_to_page(2)
+        if st.button("⬅️ Go Back"): go_to_page(2)
     with col2:
-        if st.button("Na Gaba (Next) ➡️"):
+        if st.button("Next ➡️"):
             if st.session_state.symptoms: go_to_page(4)
-            else: st.error("Don Allah rubuta abubuwan da kake ji a jikinka.")
+            else: st.error("Please write what you are feeling in your body.")
 
 # ==========================================
-# SHAFI NA 4: SCANNING INTERFACE (BIOMETRIC)
+# PAGE 4: SCANNING INTERFACE (BIOMETRIC)
 # ==========================================
 elif st.session_state.page == 4:
-    st.markdown("<h2 style='color:#1E5E3A;'>🧬 Shafi na 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
-    st.write("Kalli kyamara sannan ka taba da'irar dake kasa don fara scanning.")
+    st.markdown("<h2 style='color:#1E5E3A;'>🧬 Page 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
+    st.write("Look at the camera then touch the circle below to start scanning.")
     
     captured_img = st.camera_input("Patient Identity Capture")
     if captured_img:
@@ -192,25 +192,25 @@ elif st.session_state.page == 4:
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("⬅️ Koma Baya"): go_to_page(3)
+        if st.button("⬅️ Go Back"): go_to_page(3)
     with col2:
         if st.button("START SCANNING NOW"):
             if st.session_state.patient_photo is None:
-                st.warning("⚠️ Da fatan za a tsaya a gaban kyamara domin daukar hoto kafin a gama scan din yatsa.")
+                st.warning("⚠️ Please stand in front of the camera to take a photo before completing the fingerprint scan.")
             else:
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 for percent in range(0, 101, 25):
                     time.sleep(0.4)
                     progress_bar.progress(percent)
-                    status_text.text(f"Ana scanning yatsa da tabbatar hoto... {percent}%")
+                    status_text.text(f"Scanning fingerprint and verifying photo... {percent}%")
                 
-                st.success("✅ An kammala bincike!")
+                st.success("✅ Analysis completed!")
                 time.sleep(0.5)
                 go_to_page(5)
 
 # ==========================================
-# SHAFI NA 5: DIAGNOSTIC DASHBOARD & RESULTS
+# PAGE 5: DIAGNOSTIC DASHBOARD & RESULTS
 # ==========================================
 elif st.session_state.page == 5:
     st.markdown(
@@ -247,9 +247,9 @@ elif st.session_state.page == 5:
     st.markdown(
         f"""
         <div style="background-color: white; padding: 20px; border-radius: 12px; border-left: 6px solid #1E5E3A; box-shadow: 0px 4px 12px rgba(0,0,0,0.04);">
-            <h4 style="color:#1E5E3A; margin-top:0;">📝 Sakamakon Nazari:</h4>
-            <p><b>Suna:</b> {st.session_state.patient_name} | <b>Adireshin:</b> {st.session_state.patient_address}</p>
-            <p><b>Damuwa:</b> {st.session_state.symptoms}</p>
+            <h4 style="color:#1E5E3A; margin-top:0;">📝 Analysis Results:</h4>
+            <p><b>Name:</b> {st.session_state.patient_name} | <b>Address:</b> {st.session_state.patient_address}</p>
+            <p><b>Complaint:</b> {st.session_state.symptoms}</p>
         </div>
         """, unsafe_allow_html=True
     )
@@ -260,7 +260,7 @@ elif st.session_state.page == 5:
     with col_btn1:
         if st.button("💾 Save To Permanent Records"):
             save_patient_record(patient_id, st.session_state.patient_name, st.session_state.patient_address, st.session_state.symptoms)
-            st.success("✅ An adana bayanan marar lafiyan nan a Database!")
+            st.success("✅ This patient's data has been saved to the Database!")
             
     with col_btn2:
         if st.button("🏠 Start New Scan / Home"):
@@ -284,18 +284,18 @@ if not records_df.empty:
         st.sidebar.markdown(
             f"""
             <div style="background-color: white; padding: 10px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #28A745; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
-                <b>{idx+1}. {row['Suna']}</b> ({row['ID']})<br>
-                <small style="color:#4A5568;">📍 {row['Adireshin Zama']}</small><br>
-                <small style="color:#4A5568;">🩺 {row['Abun da ke Damunsa'][:20]}...</small><br>
-                <small style="color:#A0AEC0; font-size:10px;">⏱️ {row['Lokaci']}</small>
+                <b>{idx+1}. {row['Name']}</b> ({row['ID']})<br>
+                <small style="color:#4A5568;">📍 {row['Residential Address']}</small><br>
+                <small style="color:#4A5568;">🩺 {row['Symptoms / Complaints'][:20]}...</small><br>
+                <small style="color:#A0AEC0; font-size:10px;">⏱️ {row['Time']}</small>
             </div>
             """, unsafe_allow_html=True
         )
         
-    if st.sidebar.button("🗑️ Goge Duka History"):
+    if st.sidebar.button("🗑️ Delete All History"):
         if os.path.exists(DATABASE_FILE):
             os.remove(DATABASE_FILE)
-            st.sidebar.success("An goge duka tarihin!")
+            st.sidebar.success("All history has been deleted!")
             st.rerun()
 else:
-    st.sidebar.info("Babu tsofaffin bayanan marasa lafiya a cikin Database tukunna.")
+    st.sidebar.info("No old patient records in the Database yet.")
