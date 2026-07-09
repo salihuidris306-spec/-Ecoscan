@@ -41,7 +41,6 @@ if st.session_state.page == "Home":
     # Lead Developer Profile Section
     col1, col2 = st.columns([1, 2])
     with col1:
-        # Placeholder professional avatar image
         st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=150, caption="Lead Developer")
     with col2:
         st.markdown("""
@@ -106,30 +105,83 @@ elif st.session_state.page == "Symptoms":
             else:
                 st.error("⚠️ Please describe the symptoms!")
 
-# ----------------- PAGE 4: BIOMETRIC SCANNER (SIMULATION) -----------------
+# ----------------- PAGE 4: BIOMETRIC SCANNER (ADVANCED VISUAL SIMULATION) -----------------
 elif st.session_state.page == "Scanning":
     st.title("🧬 EcoScan Biometric Simulation")
-    st.write("Place your finger on the virtual scanner below to capture vital signs.")
+    st.write("Place your finger on the scanner pad below to capture vital signs.")
+    
+    # Custom CSS for a beautiful, realistic glowing fingerprint container and animation
+    st.markdown("""
+        <style>
+        .scanner-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #111;
+            border: 3px solid #00E6FF;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px auto;
+            width: 250px;
+            box-shadow: 0 0 20px rgba(0, 230, 255, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        .fingerprint-icon {
+            font-size: 80px;
+            color: #00E6FF;
+            animation: pulse 1.5s infinite alternate;
+        }
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 0.6; }
+            to { transform: scale(1.08); opacity: 1; }
+        }
+        </style>
+        <div class="scanner-container">
+            <div class="fingerprint-icon">☝️🏽</div>
+            <div style="color: #00E6FF; font-weight: bold; margin-top: 10px; font-family: monospace;">BIOMETRIC PAD</div>
+        </div>
+    """, unsafe_allow_html=True)
     
     scan_placeholder = st.empty()
     
-    # Simulated biometric interaction
-    finger_placed = st.checkbox("👉 PLACE YOUR FINGER HERE TO START SCANNING")
+    # Interactive scanner trigger
+    finger_placed = st.checkbox("👉 SIMULATE FINGER PLACEMENT (TOUCH PAD)")
     
     if finger_placed:
         with scan_placeholder.container():
-            st.info("🔄 Connection established. Analyzing pulse and body temperature...")
+            st.markdown("""
+                <style>
+                .laser-line {
+                    width: 100%;
+                    height: 4px;
+                    background-color: #FF0055;
+                    position: absolute;
+                    top: 0;
+                    box-shadow: 0 0 15px #FF0055;
+                    animation: scanning 2s infinite linear;
+                }
+                @keyframes scanning {
+                    0% { top: 10%; }
+                    50% { top: 80%; }
+                    100% { top: 10%; }
+                }
+                </style>
+            """, unsafe_allow_html=True)
+            
+            st.info("🔄 Biometric contact detected! Analyzing body parameters...")
             progress_bar = st.progress(0)
             for percent_complete in range(100):
-                time.sleep(0.03)  # Smooth scanning animation
+                time.sleep(0.04)  
                 progress_bar.progress(percent_complete + 1)
-            st.success("✅ Scan Completed Successfully!")
+            st.success("✅ Fingerprint & Vitals Scanned Successfully!")
             
         if st.button("View Diagnostic Results & Advice ➡️", use_container_width=True):
             st.session_state.page = "Results"
             st.rerun()
     else:
-        st.warning("Waiting for finger placement...")
+        st.warning("Awaiting biometric input... Please check the box above to simulate placing your finger.")
         if st.button("⬅️ Back"):
             st.session_state.page = "Symptoms"
             st.rerun()
@@ -141,7 +193,6 @@ elif st.session_state.page == "Results":
     st.markdown(f"**Reported Symptoms:** {st.session_state.symptoms}")
     st.markdown("---")
     
-    # Automated text analysis logic to deliver targeted feedback
     text_lower = st.session_state.symptoms.lower()
     
     st.subheader("🔍 Preliminary Analysis:")
@@ -167,7 +218,6 @@ elif st.session_state.page == "Results":
         
     st.markdown("---")
     
-    # Save Feature to Session Log
     if st.button("💾 Save Patient Record to History", use_container_width=True):
         record = {
             "Name": st.session_state.patient_name,
@@ -178,7 +228,6 @@ elif st.session_state.page == "Results":
         st.session_state.history.append(record)
         st.success("💾 Record saved successfully into the diagnostic dashboard history!")
         
-    # Historical Records Display Expansion Area
     if st.session_state.history:
         with st.expander("📊 View Saved History Logs"):
             st.table(st.session_state.history)
