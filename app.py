@@ -92,6 +92,11 @@ def reset_app():
     st.session_state.page = 1
     st.rerun()
 
+# Fix for photo reset on mobile
+def capture_photo_callback():
+    if st.session_state.camera_widget is not None:
+        st.session_state.patient_photo = st.session_state.camera_widget
+
 patient_id = f"ES-{st.session_state.patient_name[:2].upper() if len(st.session_state.patient_name) > 2 else '88'}21"
 
 # ==========================================
@@ -184,9 +189,11 @@ elif st.session_state.page == 4:
     st.markdown("<h2 style='color:#1E5E3A;'>🧬 Page 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
     st.write("Look at the camera then touch the circle below to start scanning.")
     
-    captured_img = st.camera_input("Patient Identity Capture")
-    if captured_img:
-        st.session_state.patient_photo = captured_img
+    # Using key and on_change callback locks the snapshot safely into memory on phones
+    st.camera_input("Patient Identity Capture", key="camera_widget", on_change=capture_photo_callback)
+    
+    if st.session_state.patient_photo is not None:
+        st.success("📸 Photo locked in successfully!")
 
     st.write("---")
     st.markdown(
