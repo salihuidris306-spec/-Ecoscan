@@ -35,6 +35,14 @@ if "patient_address" not in st.session_state:
 if "symptoms" not in st.session_state:
     st.session_state.symptoms = ""
 
+# Generate Patient ID safely at the top level
+if st.session_state.patient_name.strip():
+    clean_name = "".join(e for e in st.session_state.patient_name if e.isalnum())
+    prefix = clean_name[:2].upper() if len(clean_name) >= 2 else "PT"
+else:
+    prefix = "ES"
+patient_id = f"{prefix}-{time.strftime('%M%S')}"
+
 # --- 2. PREMIUM CSS DESIGN STYLING ---
 st.markdown(
     """
@@ -104,7 +112,7 @@ DISEASE_DATABASE = {
         """
     },
     "Gastrointestinal Epidemic (Cholera)": {
-        "keywords": ["cholera", "watery stool", "rice water", "severe diarrhea", "dehydration"],
+        "keywords": ["cholera", "watery stool", "rice water", "severe diarrhea", "dehydration", "vomit"],
         "disease": "CRITICAL EMERGENCY: Suspected Acute Vibrio Cholerae Infection",
         "status": "SEVERE EMERGENCY",
         "heart_rate": "115 bpm (Tachycardia)",
@@ -159,32 +167,6 @@ DISEASE_DATABASE = {
             - **Physical Care:** Check feet daily for tiny unnoticeable injuries since diabetes slows down peripheral wound healing.
         """
     },
-    "Acute Appendicitis": {
-        "keywords": ["appendix", "appendicitis", "lower right abdomen", "navel pain", "abdominal rebound"],
-        "disease": "ACUTE SURGICAL RISK: Suspected Appendicitis",
-        "status": "CRITICAL EMERGENCY",
-        "heart_rate": "96 bpm",
-        "assessment": "Peritoneal Inflammation",
-        "color_class": "metric-value-critical",
-        "chart_data": [50, 65, 78, 88, 94, 91, 98, 96],
-        "advice": """
-            - **Surgical Precaution:** Go to a general surgical emergency ward immediately. **Do not** take laxatives, enemas, or heat pads, as they can cause the appendix to burst.
-            - **Clinical Evaluation:** An abdominal ultrasound or CT scan is necessary to check for rupture indicators.
-        """
-    },
-    "Gastrointestinal Ulcer": {
-        "keywords": ["ulcer", "stomach burn", "acid reflux", "heartburn", "h. pylori", "empty stomach pain"],
-        "disease": "Suspected Peptic / Gastric Ulcer Disease",
-        "status": "Stable / Needs Care",
-        "heart_rate": "74 bpm",
-        "assessment": "Mucosal Irritation",
-        "color_class": "metric-value-warning",
-        "chart_data": [30, 45, 52, 65, 70, 68, 75, 74],
-        "advice": """
-            - **Immediate Management:** Avoid spicy foods, citrus juices, caffeine, and NSAID pain relievers (like Ibuprofen or Diclofenac) which worsen stomach bleeding.
-            - **Therapy Strategy:** Speak with a clinician about Antacids, Proton Pump Inhibitors (PPIs like Omeprazole), or an H. pylori eradication test.
-        """
-    },
     "Protozoan Infection (Malaria)": {
         "keywords": ["malaria", "fever", "chills", "shivering", "sweating", "headache", "body pain"],
         "disease": "Suspected Plasmodium Parasite Infection (Malaria)",
@@ -196,19 +178,6 @@ DISEASE_DATABASE = {
         "advice": """
             - **Action Step:** Get a Malaria Rapid Diagnostic Test (RDT) or a thick blood smear film laboratory analysis.
             - **Clinical Drug Administration:** Treat with standard artemisinin-based combination therapy (ACT) like Artemether-Lumefantrine if confirmed. Use Paracetamol for fever spikes.
-        """
-    },
-    "Bacterial Enteric Infection (Typhoid)": {
-        "keywords": ["typhoid", "salmonella", "contaminated water", "prolonged fever", "step-ladder fever"],
-        "disease": "Suspected Typhoid Enteric Fever Risk",
-        "status": "Needs Attention",
-        "heart_rate": "82 bpm",
-        "assessment": "Bacterial Proliferation",
-        "color_class": "metric-value-warning",
-        "chart_data": [35, 42, 50, 65, 75, 80, 83, 82],
-        "advice": """
-            - **Clinical Diagnostic:** Run a comprehensive blood culture or Typhidot assessment. 
-            - **Therapy:** Requires a strict timeline of targeted clinical antibiotics. Ensure absolute water hygiene by boiling all drinking water.
         """
     },
     "Respiratory System (Asthma / Pneumonia / Flu)": {
@@ -228,13 +197,10 @@ DISEASE_DATABASE = {
 
 def intelligent_diagnostic_engine(symptoms_text):
     text = symptoms_text.lower()
-    
-    # Check text across the comprehensive keyword grouping map
     for system, profile in DISEASE_DATABASE.items():
         if any(keyword in text for keyword in profile["keywords"]):
             return profile
             
-    # Default fallback matching when nothing tags the library filters
     return {
         "disease": "Condition Metrics Clear / Normal Baseline Profile",
         "status": "Stable & Sound",
@@ -306,7 +272,7 @@ elif st.session_state.page == 3:
     st.session_state.symptoms = st.text_area(
         "What are you feeling in your body regarding this illness?",
         value=st.session_state.symptoms,
-        placeholder="Try typing words like: liver disease, yellow eyes, cholera, watery stool, severe chest pain, appendix..."
+        placeholder="Try typing words like: liver disease, yellow eyes, cholera, watery stool, severe chest pain..."
     )
     
     col1, col2 = st.columns(2)
@@ -320,6 +286,8 @@ elif st.session_state.page == 3:
 # PAGE 4: SCANNING INTERFACE
 elif st.session_state.page == 4:
     st.markdown("<h2 style='color:#1E5E3A;'>🧬 Page 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
+    
+    # Optional Camera component removed to keep scanning purely simulated and cross-platform stable on mobile devices
     st.write("Touch the circle below to start scanning.")
     
     st.markdown(
@@ -405,7 +373,6 @@ elif st.session_state.page == 5:
         if st.button("🏠 Start New Scan / Home"):
             reset_app()
 
-
 # ==========================================
 # 🗂️ MAIN CONTENT: LIVE PATIENT HISTORY LOG TABLE
 # ==========================================
@@ -417,7 +384,6 @@ records_df = load_patient_records()
 
 if not records_df.empty:
     st.dataframe(records_df, use_container_width=True)
-    
     st.write("")
     if st.button("🗑️ Wipe Registry Records Table"):
         if os.path.exists(DATABASE_FILE):
