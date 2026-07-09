@@ -34,8 +34,6 @@ if "patient_address" not in st.session_state:
     st.session_state.patient_address = ""
 if "symptoms" not in st.session_state:
     st.session_state.symptoms = ""
-if "patient_photo" not in st.session_state:
-    st.session_state.patient_photo = None
 
 # --- 2. PREMIUM GREEN DESIGN STYLING (CSS) ---
 st.markdown(
@@ -88,14 +86,8 @@ def reset_app():
     st.session_state.patient_name = ""
     st.session_state.patient_address = ""
     st.session_state.symptoms = ""
-    st.session_state.patient_photo = None
     st.session_state.page = 1
     st.rerun()
-
-# Fix for photo reset on mobile
-def capture_photo_callback():
-    if st.session_state.camera_widget is not None:
-        st.session_state.patient_photo = st.session_state.camera_widget
 
 patient_id = f"ES-{st.session_state.patient_name[:2].upper() if len(st.session_state.patient_name) > 2 else '88'}21"
 
@@ -183,23 +175,16 @@ elif st.session_state.page == 3:
             else: st.error("Please write what you are feeling in your body.")
 
 # ==========================================
-# PAGE 4: SCANNING INTERFACE (BIOMETRIC)
+# PAGE 4: SCANNING INTERFACE (BIOMETRIC ONLY)
 # ==========================================
 elif st.session_state.page == 4:
     st.markdown("<h2 style='color:#1E5E3A;'>🧬 Page 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
-    st.write("Look at the camera then touch the circle below to start scanning.")
+    st.write("Touch the circle below to start scanning the fingerprint.")
     
-    # Using key and on_change callback locks the snapshot safely into memory on phones
-    st.camera_input("Patient Identity Capture", key="camera_widget", on_change=capture_photo_callback)
-    
-    if st.session_state.patient_photo is not None:
-        st.success("📸 Photo locked in successfully!")
-
-    st.write("---")
     st.markdown(
         """
-        <div style='display: flex; justify-content: center; align-items: center; margin: 15px 0;'>
-            <div style='width: 130px; height: 130px; background: radial-gradient(circle, #2CE062 0%, #1E5E3A 100%); 
+        <div style='display: flex; justify-content: center; align-items: center; margin: 30px 0;'>
+            <div style='width: 140px; height: 140px; background: radial-gradient(circle, #2CE062 0%, #1E5E3A 100%); 
             border-radius: 50%; display: flex; justify-content: center; align-items: center; 
             box-shadow: 0px 0px 25px rgba(44, 224, 98, 0.6); color: white; font-weight: bold; font-size: 14px; text-align:center;'>
                 ☝️ PLACE<br>FINGER
@@ -213,19 +198,16 @@ elif st.session_state.page == 4:
         if st.button("⬅️ Go Back"): go_to_page(3)
     with col2:
         if st.button("START SCANNING NOW"):
-            if st.session_state.patient_photo is None:
-                st.warning("⚠️ Please stand in front of the camera to take a photo before completing the fingerprint scan.")
-            else:
-                progress_bar = st.progress(0)
-                status_text = st.empty()
-                for percent in range(0, 101, 25):
-                    time.sleep(0.4)
-                    progress_bar.progress(percent)
-                    status_text.text(f"Scanning fingerprint and verifying photo... {percent}%")
-                
-                st.success("✅ Analysis completed!")
-                time.sleep(0.5)
-                go_to_page(5)
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            for percent in range(0, 101, 25):
+                time.sleep(0.4)
+                progress_bar.progress(percent)
+                status_text.text(f"Scanning fingerprint and analyzing vital signs... {percent}%")
+            
+            st.success("✅ Analysis completed successfully!")
+            time.sleep(0.5)
+            go_to_page(5)
 
 # ==========================================
 # PAGE 5: DIAGNOSTIC DASHBOARD & RESULTS
@@ -240,24 +222,18 @@ elif st.session_state.page == 5:
         """, unsafe_allow_html=True
     )
     
-    col_left, col_right = st.columns([2.8, 1.2])
+    # Balanced grid view for results
+    row1_col1, row1_col2 = st.columns(2)
+    row2_col1, row2_col2 = st.columns(2)
     
-    with col_right:
-        if st.session_state.patient_photo is not None:
-            st.image(st.session_state.patient_photo, use_container_width=True)
-            
-    with col_left:
-        row1_col1, row1_col2 = st.columns(2)
-        row2_col1, row2_col2 = st.columns(2)
-        
-        with row1_col1:
-            st.markdown('<div class="metric-box"><div class="metric-title">Biometric:</div><div class="metric-value-green">VERIFIED</div></div>', unsafe_allow_html=True)
-        with row1_col2:
-            st.markdown('<div class="metric-box"><div class="metric-title">Heart Rate:</div><div class="metric-value-green">72 bpm</div></div>', unsafe_allow_html=True)
-        with row2_col1:
-            st.markdown('<div class="metric-box"><div class="metric-title">Vitals:</div><div class="metric-value-green">Stable</div></div>', unsafe_allow_html=True)
-        with row2_col2:
-            st.markdown('<div class="metric-box"><div class="metric-title">Assessment:</div><div class="metric-value-accent">Healthy</div></div>', unsafe_allow_html=True)
+    with row1_col1:
+        st.markdown('<div class="metric-box"><div class="metric-title">Biometric:</div><div class="metric-value-green">VERIFIED</div></div>', unsafe_allow_html=True)
+    with row1_col2:
+        st.markdown('<div class="metric-box"><div class="metric-title">Heart Rate:</div><div class="metric-value-green">72 bpm</div></div>', unsafe_allow_html=True)
+    with row2_col1:
+        st.markdown('<div class="metric-box"><div class="metric-title">Vitals:</div><div class="metric-value-green">Stable</div></div>', unsafe_allow_html=True)
+    with row2_col2:
+        st.markdown('<div class="metric-box"><div class="metric-title">Assessment:</div><div class="metric-value-accent">Healthy</div></div>', unsafe_allow_html=True)
 
     st.markdown("<h3 style='color:#1E5E3A;'>Scan Analysis Notes</h3>", unsafe_allow_html=True)
     st.area_chart(pd.DataFrame([20, 38, 29, 48, 56, 42, 68, 32], columns=['Vitals Level']), color="#1E5E3A")
