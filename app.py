@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import os
 
 # Page Configuration
 st.set_page_config(
@@ -41,7 +42,11 @@ if st.session_state.page == "Home":
     # Lead Developer Profile Section
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=150, caption="Lead Developer")
+        # Tries to load your custom photo from GitHub repo; falls back to avatar icon if not uploaded yet
+        if os.path.exists("profile.jpg"):
+            st.image("profile.jpg", width=160, caption="Lead Developer")
+        else:
+            st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=150, caption="Upload profile.jpg to GitHub")
     with col2:
         st.markdown("""
         ### Developed by: **Salihu Idris**
@@ -88,7 +93,7 @@ elif st.session_state.page == "Symptoms":
     symptoms = st.text_area(
         "Describe what you are feeling in your body (Symptoms):",
         value=st.session_state.symptoms,
-        placeholder="Example: Headache, fever, chills, and body pain for 2 days..."
+        placeholder="e.g., fever, headache, cough, stomach pain, vomiting, weakness..."
     )
     
     col1, col2 = st.columns(2)
@@ -105,88 +110,68 @@ elif st.session_state.page == "Symptoms":
             else:
                 st.error("⚠️ Please describe the symptoms!")
 
-# ----------------- PAGE 4: BIOMETRIC SCANNER (ADVANCED VISUAL SIMULATION) -----------------
+# ----------------- PAGE 4: BIOMETRIC SCANNER (ROUNDED DESIGN) -----------------
 elif st.session_state.page == "Scanning":
     st.title("🧬 EcoScan Biometric Simulation")
-    st.write("Place your finger on the scanner pad below to capture vital signs.")
+    st.write("Place your finger on the circular scanner pad below to capture vital signs.")
     
-    # Custom CSS for a beautiful, realistic glowing fingerprint container and animation
+    # Custom CSS for a PERFECTLY ROUNDED/CIRCULAR glowing fingerprint container
     st.markdown("""
         <style>
-        .scanner-container {
+        .scanner-circle {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background-color: #111;
-            border: 3px solid #00E6FF;
-            border-radius: 20px;
-            padding: 30px;
-            margin: 20px auto;
-            width: 250px;
-            box-shadow: 0 0 20px rgba(0, 230, 255, 0.5);
+            background-color: #0d1b2a;
+            border: 4px solid #00E6FF;
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            margin: 30px auto;
+            box-shadow: 0 0 25px rgba(0, 230, 255, 0.6);
             position: relative;
             overflow: hidden;
         }
-        .fingerprint-icon {
-            font-size: 80px;
-            color: #00E6FF;
-            animation: pulse 1.5s infinite alternate;
+        .fingerprint-design {
+            font-size: 75px;
+            cursor: pointer;
+            user-select: none;
+            animation: pulse-effect 1.5s infinite alternate;
         }
-        @keyframes pulse {
-            from { transform: scale(1); opacity: 0.6; }
-            to { transform: scale(1.08); opacity: 1; }
+        @keyframes pulse-effect {
+            from { transform: scale(0.95); opacity: 0.7; }
+            to { transform: scale(1.05); opacity: 1; }
         }
         </style>
-        <div class="scanner-container">
-            <div class="fingerprint-icon">☝️🏽</div>
-            <div style="color: #00E6FF; font-weight: bold; margin-top: 10px; font-family: monospace;">BIOMETRIC PAD</div>
+        <div class="scanner-circle">
+            <div class="fingerprint-design">☝️🏽</div>
+            <div style="color: #00E6FF; font-size: 11px; font-weight: bold; font-family: monospace; letter-spacing: 1px;">SCAN PAD</div>
         </div>
     """, unsafe_allow_html=True)
     
     scan_placeholder = st.empty()
-    
-    # Interactive scanner trigger
     finger_placed = st.checkbox("👉 SIMULATE FINGER PLACEMENT (TOUCH PAD)")
     
     if finger_placed:
         with scan_placeholder.container():
-            st.markdown("""
-                <style>
-                .laser-line {
-                    width: 100%;
-                    height: 4px;
-                    background-color: #FF0055;
-                    position: absolute;
-                    top: 0;
-                    box-shadow: 0 0 15px #FF0055;
-                    animation: scanning 2s infinite linear;
-                }
-                @keyframes scanning {
-                    0% { top: 10%; }
-                    50% { top: 80%; }
-                    100% { top: 10%; }
-                }
-                </style>
-            """, unsafe_allow_html=True)
-            
-            st.info("🔄 Biometric contact detected! Analyzing body parameters...")
+            st.info("🔄 Biometric contact detected! Synchronizing vitals and data...")
             progress_bar = st.progress(0)
             for percent_complete in range(100):
-                time.sleep(0.04)  
+                time.sleep(0.03)  
                 progress_bar.progress(percent_complete + 1)
-            st.success("✅ Fingerprint & Vitals Scanned Successfully!")
+            st.success("✅ Vital signs captured successfully!")
             
         if st.button("View Diagnostic Results & Advice ➡️", use_container_width=True):
             st.session_state.page = "Results"
             st.rerun()
     else:
-        st.warning("Awaiting biometric input... Please check the box above to simulate placing your finger.")
+        st.warning("Awaiting biometric input... Please check the box above.")
         if st.button("⬅️ Back"):
             st.session_state.page = "Symptoms"
             st.rerun()
 
-# ----------------- PAGE 5: DIAGNOSTIC RESULTS & MEDICAL ADVICE -----------------
+# ----------------- PAGE 5: SMART DIAGNOSTIC RESULTS & MEDICAL ADVICE -----------------
 elif st.session_state.page == "Results":
     st.title("🏥 Diagnostic Insights & Expert Medical Advice")
     st.markdown(f"**Patient Name:** {st.session_state.patient_name}")
@@ -194,26 +179,43 @@ elif st.session_state.page == "Results":
     st.markdown("---")
     
     text_lower = st.session_state.symptoms.lower()
-    
     st.subheader("🔍 Preliminary Analysis:")
-    if "fever" in text_lower or "headache" in text_lower or "zazzabi" in text_lower or "ciwon kai" in text_lower:
-        st.warning("⚠️ High probability of Malaria or Bacterial Infection.")
-        
+    
+    # ADVANCED MULTI-DISEASE DETECTION ENGINE
+    if "fever" in text_lower or "headache" in text_lower or "zazzabi" in text_lower or "chills" in text_lower:
+        st.warning("⚠️ High Clinical Correlation: Suspicion of Malaria or Acute Bacterial Infection.")
         st.subheader("💡 Recommended Medical Advice:")
         st.write("""
-        1. **Get Tested:** Visit the nearest medical laboratory for a rapid diagnostic test (RDT) or microscopy for Malaria.
-        2. **Stay Hydrated:** Drink plenty of clean water to manage the body temperature.
-        3. **Medication:** Take antipyretics like Paracetamol only as prescribed for temporary relief, and complete a full course of anti-malarial medication if tested positive.
-        4. **Prevention:** Sleep under a treated mosquito net and eliminate stagnant water around your home.
+        1. **Laboratory Confirmation:** Undergo a blood smear microscopy or Rapid Diagnostic Test (RDT) for Malaria.
+        2. **Hydration Management:** Consume increased volumes of fluids to counteract thermal perspiration.
+        3. **Therapeutic Action:** Administer Antipyretics (e.g., Paracetamol) for symptomatic pyrexia management, and consult a physician for appropriate ACT prescription if positive.
         """)
-    else:
-        st.info("ℹ️ General symptoms detected. Requires baseline monitoring.")
         
+    elif "cough" in text_lower or "flu" in text_lower or "catar" in text_lower or "throat" in text_lower:
+        st.warning("⚠️ High Clinical Correlation: Respiratory Tract Irritation / Viral Upper Respiratory Infection.")
         st.subheader("💡 Recommended Medical Advice:")
         st.write("""
-        1. **Rest:** Get at least 8 hours of sleep to boost your immune system.
-        2. **Observation:** Monitor your body parameters closely over the next 24 hours.
-        3. **Consultation:** If symptoms worsen or persist, please report directly to a certified clinical staff.
+        1. **Respiratory Support:** Practice warm saline gargles and stay in well-ventilated spaces.
+        2. **Symptomatic Relief:** Use over-the-counter expectorants or mucolytics if congestion worsens.
+        3. **Red Flags:** Seek immediate critical attention if breathing difficulty or chest retraction develops.
+        """)
+        
+    elif "stomach" in text_lower or "vomit" in text_lower or "diarrhea" in text_lower or "typhoid" in text_lower:
+        st.warning("⚠️ High Clinical Correlation: Gastrointestinal Infection / Potential Food Poisoning or Gastroenteritis.")
+        st.subheader("💡 Recommended Medical Advice:")
+        st.write("""
+        1. **Electrolyte Replacement:** Administer Oral Rehydration Salts (ORS) instantly to avoid systemic dehydration.
+        2. **Dietary Changes:** Maintain a bland diet (BRAT protocol) and strictly avoid oily, spiced food elements.
+        3. **Clinical Testing:** A stool analysis or Widal test is recommended if condition persists beyond 48 hours.
+        """)
+        
+    else:
+        st.info("ℹ️ Baseline Assessment: General physiological fatigue or unspecified low-grade viral prodrome.")
+        st.subheader("💡 Recommended Medical Advice:")
+        st.write("""
+        1. **Rest Optimization:** Ensure complete physical rest and a minimum of 8 hours of quality sleep.
+        2. **Nutritional Reinforcement:** Boost immune health by consuming fresh fruits and micronutrient-dense items.
+        3. **Monitoring Protocol:** Record core metrics regularly. If local localized symptoms arise, schedule a clinical checkup.
         """)
         
     st.markdown("---")
