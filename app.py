@@ -1,240 +1,301 @@
 import streamlit as st
+import pandas as pd
 import time
 import os
 
-# Page Configuration
-st.set_page_config(
-    page_title="EcoScan - Healthcare Innovation",
-    page_icon="🩺",
-    layout="centered"
+# --- 1. SET PAGE CONFIG & FILES ---
+st.set_page_config(page_title="EcoScan - Smart Health Assistant", page_icon="🌿", layout="centered")
+
+DATABASE_FILE = "ecoscan_records.csv"
+
+def load_patient_records():
+    if os.path.exists(DATABASE_FILE):
+        return pd.read_csv(DATABASE_FILE)
+    return pd.DataFrame(columns=["ID", "Suna", "Adireshin Zama", "Abun da ke Damunsa", "Lokaci"])
+
+def save_patient_record(p_id, name, address, symptoms):
+    df_existing = load_patient_records()
+    new_data = pd.DataFrame([{
+        "ID": p_id,
+        "Suna": name,
+        "Adireshin Zama": address,
+        "Abun da ke Damunsa": symptoms,
+        "Lokaci": time.strftime("%Y-%m-%d %H:%M:%S")
+    }])
+    df_combined = pd.concat([df_existing, new_data], ignore_index=True)
+    df_combined.to_csv(DATABASE_FILE, index=False)
+
+# INITIALIZE PAGE SYSTEM (1 to 5)
+if "page" not in st.session_state:
+    st.session_state.page = 1
+if "patient_name" not in st.session_state:
+    st.session_state.patient_name = ""
+if "patient_address" not in st.session_state:
+    st.session_state.patient_address = ""
+if "symptoms" not in st.session_state:
+    st.session_state.symptoms = ""
+if "patient_photo" not in st.session_state:
+    st.session_state.patient_photo = None
+
+# --- 2. PREMIUM GREEN DESIGN STYLING (CSS) ---
+st.markdown(
+    """
+    <style>
+    .stApp { background-color: #F4F7F5 !important; }
+    .metric-box {
+        background-color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 15px;
+    }
+    .metric-title { color: #6C757D; font-size: 13px; font-weight: 600; text-transform: uppercase; }
+    .metric-value-green { color: #1E5E3A; font-size: 24px; font-weight: bold; }
+    .metric-value-accent { color: #28A745; font-size: 24px; font-weight: bold; }
+    
+    .stButton>button {
+        background-color: #1E5E3A !important;
+        color: white !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+        padding: 12px 24px !important;
+        width: 100%;
+        border: none !important;
+    }
+    .stButton>button:hover { background-color: #144026 !important; }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-# Manage navigation and application states using Streamlit Session State
-if 'page' not in st.session_state:
-    st.session_state.page = "Home"
+def go_to_page(page_num):
+    st.session_state.page = page_num
+    st.rerun()
 
-if 'history' not in st.session_state:
-    st.session_state.history = []
-
-if 'patient_name' not in st.session_state:
-    st.session_state.patient_name = ""
-
-if 'patient_address' not in st.session_state:
-    st.session_state.patient_address = ""
-
-if 'symptoms' not in st.session_state:
-    st.session_state.symptoms = ""
-
-# Function to reset state and return to Home
-def go_home():
-    st.session_state.page = "Home"
+def reset_app():
     st.session_state.patient_name = ""
     st.session_state.patient_address = ""
     st.session_state.symptoms = ""
+    st.session_state.patient_photo = None
+    st.session_state.page = 1
+    st.rerun()
 
-# ----------------- PAGE 1: HOME PAGE (WELCOME & DEVELOPER PROFILE) -----------------
-if st.session_state.page == "Home":
-    st.title("🌟 Welcome to EcoScan")
-    st.subheader("Next-Generation Smart Health Assistant")
-    
-    st.markdown("---")
-    
-    # Lead Developer Profile Section
-    col1, col2 = st.columns([1, 2])
-    with col1:
-        if os.path.exists("profile.jpg"):
-            st.image("profile.jpg", width=160, caption="Lead Developer")
-        else:
-            st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=150, caption="Upload profile.jpg to GitHub")
-    with col2:
-        st.markdown("""
-        ### Developed by: **Salihu Idris**
-        *Participant, Young Innovation Challenge*
-        
-        **EcoScan** is an innovative medical utility application designed to bridge the gap 
-        between patients and quick diagnostic assistance. It features intelligent symptom analysis 
-        and digital scanning simulation to provide immediate healthcare advice.
-        """)
-        
-    st.markdown("---")
-    if st.button("🚀 Start Diagnosis", use_container_width=True):
-        st.session_state.page = "Registration"
-        st.rerun()
+patient_id = f"ES-{st.session_state.patient_name[:2].upper() if len(st.session_state.patient_name) > 2 else '88'}21"
 
-# ----------------- PAGE 2: PATIENT REGISTRATION -----------------
-elif st.session_state.page == "Registration":
-    st.title("📝 Patient Registration")
-    st.write("Please enter the patient's personal details below.")
+# ==========================================
+# SHAFI NA 1: OPENING PAGE (DEVELOPER & WELCOME ONLY)
+# ==========================================
+if st.session_state.page == 1:
+    st.markdown(
+        """
+        <div style="background-color: #1E5E3A; padding: 35px; border-radius: 12px; color: white; text-align: center; margin-bottom: 25px;">
+            <h1 style="margin: 0; font-size: 34px; font-weight: bold;">🌟 Welcome to EcoScan</h1>
+            <p style="margin: 8px 0 0 0; font-size: 18px; opacity: 0.9; font-weight: 500;">Next-Generation Smart Health Assistant</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
     
-    name = st.text_input("Full Name of Patient:", value=st.session_state.patient_name)
-    address = st.text_area("Home Address:", value=st.session_state.patient_address)
+    # Avatar Image Box (Placeholder tun da babu hoto a GitHub dinka tukunna)
+    st.markdown(
+        """
+        <div style="display: flex; justify-content: center; margin-bottom: 25px;">
+            <div style="width: 130px; height: 130px; background-color: #E2E8F0; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #1E5E3A;">
+                <span style="color: #4A5568; font-size: 14px; font-weight: bold; text-align: center;">EcoScan<br>Core</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True
+    )
     
+    st.markdown(
+        """
+        <div style="background-color: white; padding: 20px; border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.03); margin-bottom: 30px; border-left: 5px solid #28A745; text-align: center;">
+            <h3 style="color: #1E5E3A; margin-top: 0; font-size: 22px;">Developed by: Salihu Idris</h3>
+            <p style="color: #4A5568; font-style: italic; font-size: 14px; margin-bottom: 15px;">Participant, Young Innovation Challenge</p>
+            <hr style="border: 0; border-top: 1px solid #E2E8F0;">
+            <p style="margin: 10px 0 0 0; color: #718096; line-height: 1.6; font-size: 14.5px;">
+                EcoScan is an innovative medical utility application designed to bridge the gap between patients and quick diagnostic assistance. 
+                It features intelligent symptom analysis and digital scanning simulation to provide immediate healthcare advice.
+            </p>
+        </div>
+        """, unsafe_allow_html=True
+    )
+    
+    if st.button("Get Started / Enter App 🚀"):
+        go_to_page(2)
+
+# ==========================================
+# SHAFI NA 2: PATIENT REGISTRATION FORM
+# ==========================================
+elif st.session_state.page == 2:
+    st.markdown("<h2 style='color:#1E5E3A;'>📝 Shafi na 2: Rijistar Marar Lafiya (Registration)</h2>", unsafe_allow_html=True)
+    st.write("Shigar da bayanan marar lafiya domin kaddamar da binciken lafiya.")
+    
+    st.session_state.patient_name = st.text_input("Cikakken Sunan Marar Lafiya (Full Name):", value=st.session_state.patient_name)
+    st.session_state.patient_address = st.text_area("Adireshin Marar Lafiya (Address):", value=st.session_state.patient_address)
+    
+    st.write("")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("⬅️ Back to Home"):
-            go_home()
-            st.rerun()
+        if st.button("⬅️ Back To Home"): go_to_page(1)
     with col2:
-        if st.button("Next: Symptoms ➡️"):
-            if name and address:
-                st.session_state.patient_name = name
-                st.session_state.patient_address = address
-                st.session_state.page = "Symptoms"
-                st.rerun()
+        if st.button("Na Gaba (Next) ➡️"):
+            if st.session_state.patient_name and st.session_state.patient_address:
+                go_to_page(3)
             else:
-                st.error("⚠️ Please fill in all fields before proceeding!")
+                st.error("⚠️ Don Allah shigar da Suna da Adireshi kafin ka ci gaba.")
 
-# ----------------- PAGE 3: SYMPTOM EVALUATION -----------------
-elif st.session_state.page == "Symptoms":
-    st.title("🤒 Symptom Evaluation")
-    st.write(f"Patient: **{st.session_state.patient_name}**")
+# ==========================================
+# SHAFI NA 3: BAYANAN RASHIN LAFIYA (SYMPTOMS)
+# ==========================================
+elif st.session_state.page == 3:
+    st.markdown("<h2 style='color:#1E5E3A;'>🏥 Shafi na 3: Bayanan Yanayin Jiki</h2>", unsafe_allow_html=True)
+    st.info(f"📋 Marar Lafiya: {st.session_state.patient_name}")
     
-    symptoms = st.text_area(
-        "Describe what you are feeling in your body (Symptoms):",
+    st.session_state.symptoms = st.text_area(
+        "Menene kake ji a jikinka game da wannan rashin lafiyar?",
         value=st.session_state.symptoms,
-        placeholder="e.g., fever, headache, cough, stomach pain, vomiting, weakness..."
+        placeholder="Misali: Ciwon kai, Zazzabi, Tari..."
     )
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("⬅️ Back"):
-            st.session_state.page = "Registration"
-            st.rerun()
+        if st.button("⬅️ Koma Baya"): go_to_page(2)
     with col2:
-        if st.button("Next: Biometric Scan ➡️"):
-            if symptoms:
-                st.session_state.symptoms = symptoms
-                st.session_state.page = "Scanning"
-                st.rerun()
-            else:
-                st.error("⚠️ Please describe the symptoms!")
+        if st.button("Na Gaba (Next) ➡️"):
+            if st.session_state.symptoms: go_to_page(4)
+            else: st.error("Don Allah rubuta abubuwan da kake ji a jikinka.")
 
-# ----------------- PAGE 4: AUTOMATIC BIOMETRIC SCANNER -----------------
-elif st.session_state.page == "Scanning":
-    st.title("🧬 EcoScan Biometric Simulation")
-    st.write("Place your finger on the circular pad. Scanning starts automatically...")
+# ==========================================
+# SHAFI NA 4: SCANNING INTERFACE (BIOMETRIC)
+# ==========================================
+elif st.session_state.page == 4:
+    st.markdown("<h2 style='color:#1E5E3A;'>🧬 Shafi na 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
+    st.write("Kalli kyamara sannan ka taba da'irar dake kasa don fara scanning.")
     
-    # Custom CSS for a rounded scanner container with an animated up-and-down laser line
-    st.markdown("""
-        <style>
-        .scanner-circle {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #0d1b2a;
-            border: 4px solid #00E6FF;
-            border-radius: 50%;
-            width: 200px;
-            height: 200px;
-            margin: 30px auto;
-            box-shadow: 0 0 25px rgba(0, 230, 255, 0.6);
-            position: relative;
-            overflow: hidden;
-        }
-        .fingerprint-design {
-            font-size: 75px;
-            user-select: none;
-        }
-        .laser-line {
-            width: 100%;
-            height: 4px;
-            background-color: #FF0055;
-            position: absolute;
-            box-shadow: 0 0 15px #FF0055;
-            animation: scanning 1.5s infinite ease-in-out;
-        }
-        @keyframes scanning {
-            0% { top: 0%; }
-            50% { top: 100%; }
-            100% { top: 0%; }
-        }
-        </style>
-        <div class="scanner-circle">
-            <div class="laser-line"></div>
-            <div class="fingerprint-design">☝️🏽</div>
-            <div style="color: #00E6FF; font-size: 11px; font-weight: bold; font-family: monospace; letter-spacing: 1px; z-index: 2;">SCANNING...</div>
+    captured_img = st.camera_input("Patient Identity Capture")
+    if captured_img:
+        st.session_state.patient_photo = captured_img
+
+    st.write("---")
+    st.markdown(
+        """
+        <div style='display: flex; justify-content: center; align-items: center; margin: 15px 0;'>
+            <div style='width: 130px; height: 130px; background: radial-gradient(circle, #2CE062 0%, #1E5E3A 100%); 
+            border-radius: 50%; display: flex; justify-content: center; align-items: center; 
+            box-shadow: 0px 0px 25px rgba(44, 224, 98, 0.6); color: white; font-weight: bold; font-size: 14px; text-align:center;'>
+                ☝️ PLACE<br>FINGER
+            </div>
         </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True
+    )
     
-    # Automatically triggers progress bar animation instantly on page load
-    st.info("🔄 Biometric contact established. Analyzing body temperature, pulse rate, and biomarkers...")
-    progress_bar = st.progress(0)
-    
-    for percent_complete in range(100):
-        time.sleep(0.04)  # Total 4 seconds scanning time animation
-        progress_bar.progress(percent_complete + 1)
-        
-    st.success("✅ Fingerprint, Pulse, and Vital Signs Scanned Successfully!")
-    time.sleep(1.2) # Give a brief second for them to look at success message
-    
-    # Go straight to the results automatically without clicking anything else
-    st.session_state.page = "Results"
-    st.rerun()
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("⬅️ Koma Baya"): go_to_page(3)
+    with col2:
+        if st.button("START SCANNING NOW"):
+            if st.session_state.patient_photo is None:
+                st.warning("⚠️ Da fatan za a tsaya a gaban kyamara domin daukar hoto kafin a gama scan din yatsa.")
+            else:
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                for percent in range(0, 101, 25):
+                    time.sleep(0.4)
+                    progress_bar.progress(percent)
+                    status_text.text(f"Ana scanning yatsa da tabbatar hoto... {percent}%")
+                
+                st.success("✅ An kammala bincike!")
+                time.sleep(0.5)
+                go_to_page(5)
 
-# ----------------- PAGE 5: DIRECT STRATEGIC DIAGNOSTIC RESULTS -----------------
-elif st.session_state.page == "Results":
-    st.title("🏥 Diagnostic Insights & Expert Medical Advice")
-    st.markdown(f"**Patient Name:** {st.session_state.patient_name}")
-    st.markdown(f"**Reported Symptoms:** {st.session_state.symptoms}")
-    st.markdown("---")
+# ==========================================
+# SHAFI NA 5: DIAGNOSTIC DASHBOARD & RESULTS
+# ==========================================
+elif st.session_state.page == 5:
+    st.markdown(
+        f"""
+        <div style="background-color: #1E5E3A; padding: 22px; border-radius: 12px; color: white; margin-bottom: 25px;">
+            <h1 style="margin: 0; font-size: 26px; font-weight: bold;">🌿 EcoScan</h1>
+            <p style="margin: 6px 0 0 0; font-size: 16px; opacity: 0.9;">DIAGNOSTIC REPORT: Patient ID {patient_id}</p>
+        </div>
+        """, unsafe_allow_html=True
+    )
     
-    text_lower = st.session_state.symptoms.lower()
-    st.subheader("🔍 Preliminary Analysis:")
+    col_left, col_right = st.columns([2.8, 1.2])
     
-    # DIRECT AND STRAIGHTFORWARD CONDITION MATCHING
-    if "fever" in text_lower or "headache" in text_lower or "zazzabi" in text_lower or "chills" in text_lower:
-        st.error("🚨 Condition Confirmed: Malaria Infection.")
-        st.subheader("💡 Recommended Medical Advice:")
-        st.write("""
-        1. **Medical Testing:** Get a laboratory Blood Smear Microscopy test for Malaria parasite calculation immediately.
-        2. **Treatment Protocol:** Use approved Artemisinin-based Combination Therapy (ACT) medications as directed by a healthcare official.
-        3. **Hydration Care:** Increase fluid intake immediately to manage elevated body temperature.
-        """)
+    with col_right:
+        if st.session_state.patient_photo is not None:
+            st.image(st.session_state.patient_photo, use_container_width=True)
+            
+    with col_left:
+        row1_col1, row1_col2 = st.columns(2)
+        row2_col1, row2_col2 = st.columns(2)
         
-    elif "cough" in text_lower or "flu" in text_lower or "catar" in text_lower or "throat" in text_lower:
-        st.error("🚨 Condition Confirmed: Respiratory Tract Infection.")
-        st.subheader("💡 Recommended Medical Advice:")
-        st.write("""
-        1. **Airway Management:** Perform regular warm water saline gargles to reduce throat inflammation.
-        2. **Symptomatic Control:** Administer direct doctor-approved expectorants or cough suppressants.
-        3. **Isolation Check:** Wear a protective medical mask to curb spreading the airborne respiratory viral load.
-        """)
-        
-    elif "stomach" in text_lower or "vomit" in text_lower or "diarrhea" in text_lower or "typhoid" in text_lower:
-        st.error("🚨 Condition Confirmed: Gastrointestinal Food Poisoning.")
-        st.subheader("💡 Recommended Medical Advice:")
-        st.write("""
-        1. **Dehydration Control:** Drink Oral Rehydration Salts (ORS) solution immediately to restore lost electrolytes.
-        2. **Dietary Restriction:** Restrict feeding to a soft, completely bland diet; strictly avoid fatty or heavily spiced food items.
-        3. **Clinical Testing:** Run a Widal Test and stool culture analysis if conditions remain unchanged within 24 hours.
-        """)
-        
-    else:
-        st.warning("⚠️ Condition Confirmed: Severe Physiological Fatigue & Weakness.")
-        st.subheader("💡 Recommended Medical Advice:")
-        st.write("""
-        1. **Rest Recovery:** Observe a full, strict 8 hours of complete bedtime rest and zero strenuous tasks.
-        2. **Immune Boosting:** Consume vital micro-nutrients, water, and fresh natural fruits to restore cellular energy levels.
-        3. **Observation:** If specific pain areas surface, log them directly for medical review.
-        """)
-        
-    st.markdown("---")
-    
-    if st.button("💾 Save Patient Record to History", use_container_width=True):
-        record = {
-            "Name": st.session_state.patient_name,
-            "Address": st.session_state.patient_address,
-            "Symptoms": st.session_state.symptoms,
-            "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-        }
-        st.session_state.history.append(record)
-        st.success("💾 Record saved successfully into the diagnostic dashboard history!")
-        
-    if st.session_state.history:
-        with st.expander("📊 View Saved History Logs"):
-            st.table(st.session_state.history)
+        with row1_col1:
+            st.markdown('<div class="metric-box"><div class="metric-title">Biometric:</div><div class="metric-value-green">VERIFIED</div></div>', unsafe_allow_html=True)
+        with row1_col2:
+            st.markdown('<div class="metric-box"><div class="metric-title">Heart Rate:</div><div class="metric-value-green">72 bpm</div></div>', unsafe_allow_html=True)
+        with row2_col1:
+            st.markdown('<div class="metric-box"><div class="metric-title">Vitals:</div><div class="metric-value-green">Stable</div></div>', unsafe_allow_html=True)
+        with row2_col2:
+            st.markdown('<div class="metric-box"><div class="metric-title">Assessment:</div><div class="metric-value-accent">Healthy</div></div>', unsafe_allow_html=True)
 
-    if st.button("🏠 Return to Home Page", use_container_width=True):
-        go_home()
-        st.rerun()
+    st.markdown("<h3 style='color:#1E5E3A;'>Scan Analysis Notes</h3>", unsafe_allow_html=True)
+    st.area_chart(pd.DataFrame([20, 38, 29, 48, 56, 42, 68, 32], columns=['Vitals Level']), color="#1E5E3A")
+    
+    st.markdown(
+        f"""
+        <div style="background-color: white; padding: 20px; border-radius: 12px; border-left: 6px solid #1E5E3A; box-shadow: 0px 4px 12px rgba(0,0,0,0.04);">
+            <h4 style="color:#1E5E3A; margin-top:0;">📝 Sakamakon Nazari:</h4>
+            <p><b>Suna:</b> {st.session_state.patient_name} | <b>Adireshin:</b> {st.session_state.patient_address}</p>
+            <p><b>Damuwa:</b> {st.session_state.symptoms}</p>
+        </div>
+        """, unsafe_allow_html=True
+    )
+
+    st.write("")
+    col_btn1, col_btn2 = st.columns(2)
+    
+    with col_btn1:
+        if st.button("💾 Save To Permanent Records"):
+            save_patient_record(patient_id, st.session_state.patient_name, st.session_state.patient_address, st.session_state.symptoms)
+            st.success("✅ An adana bayanan marar lafiyan nan a Database!")
+            
+    with col_btn2:
+        if st.button("🏠 Start New Scan / Home"):
+            reset_app()
+
+# ==========================================
+# SIDEBAR: HISTORY DATABASE
+# ==========================================
+st.sidebar.markdown(
+    """
+    <div style="background-color: #1E5E3A; padding: 12px; border-radius: 6px; color: white; text-align: center; font-weight: bold; margin-bottom:15px;">
+        🗂️ Database History Records
+    </div>
+    """, unsafe_allow_html=True
+)
+
+records_df = load_patient_records()
+
+if not records_df.empty:
+    for idx, row in records_df.iterrows():
+        st.sidebar.markdown(
+            f"""
+            <div style="background-color: white; padding: 10px; border-radius: 6px; margin-top: 8px; border-left: 4px solid #28A745; box-shadow: 0px 2px 5px rgba(0,0,0,0.05);">
+                <b>{idx+1}. {row['Suna']}</b> ({row['ID']})<br>
+                <small style="color:#4A5568;">📍 {row['Adireshin Zama']}</small><br>
+                <small style="color:#4A5568;">🩺 {row['Abun da ke Damunsa'][:20]}...</small><br>
+                <small style="color:#A0AEC0; font-size:10px;">⏱️ {row['Lokaci']}</small>
+            </div>
+            """, unsafe_allow_html=True
+        )
+        
+    if st.sidebar.button("🗑️ Goge Duka History"):
+        if os.path.exists(DATABASE_FILE):
+            os.remove(DATABASE_FILE)
+            st.sidebar.success("An goge duka tarihin!")
+            st.rerun()
+else:
+    st.sidebar.info("Babu tsofaffin bayanan marasa lafiya a cikin Database tukunna.")
