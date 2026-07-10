@@ -12,8 +12,9 @@ def load_patient_records():
     if os.path.exists(DATABASE_FILE):
         try:
             df = pd.read_csv(DATABASE_FILE)
-            # Tace layukan da basu da cikakken suna ko ID don kada su nuna 'None'
-            df = df.dropna(subset=["Full Name", "Patient ID"])
+            # Ensure columns exist before dropping duplicates or nulls
+            if "Full Name" in df.columns and "Patient ID" in df.columns:
+                df = df.dropna(subset=["Full Name", "Patient ID"])
             return df
         except:
             pass
@@ -40,14 +41,16 @@ if "patient_address" not in st.session_state:
     st.session_state.patient_address = ""
 if "symptoms" not in st.session_state:
     st.session_state.symptoms = ""
+if "patient_id" not in st.session_state:
+    st.session_state.patient_id = ""
 
-# Generate Patient ID safely at the top level based on valid input
-if st.session_state.patient_name.strip():
-    clean_name = "".join(e for e in st.session_state.patient_name if e.isalnum())
-    prefix = clean_name[:2].upper() if len(clean_name) >= 2 else "PT"
-else:
-    prefix = "ES"
-patient_id = f"{prefix}-{time.strftime('%M%S')}"
+def generate_patient_id():
+    if st.session_state.patient_name.strip():
+        clean_name = "".join(e for e in st.session_state.patient_name if e.isalnum())
+        prefix = clean_name[:2].upper() if len(clean_name) >= 2 else "PT"
+    else:
+        prefix = "ES"
+    return f"{prefix}-{time.strftime('%M%S')}"
 
 # --- 2. PREMIUM CSS DESIGN STYLING ---
 st.markdown(
@@ -98,6 +101,7 @@ def reset_app():
     st.session_state.patient_name = ""
     st.session_state.patient_address = ""
     st.session_state.symptoms = ""
+    st.session_state.patient_id = ""
     st.session_state.page = 1
     st.rerun()
 
@@ -266,6 +270,8 @@ elif st.session_state.page == 2:
     with col2:
         if st.button("Next ➡️"):
             if st.session_state.patient_name.strip() and st.session_state.patient_address.strip():
+                # Fix: Generate and lock the Patient ID here so it doesn't change later
+                st.session_state.patient_id = generate_patient_id()
                 go_to_page(3)
             else:
                 st.error("⚠️ Please enter Name and Address before you proceed.")
@@ -325,12 +331,13 @@ elif st.session_state.page == 4:
 # PAGE 5: DIAGNOSTIC DASHBOARD & RESULTS
 elif st.session_state.page == 5:
     diagnosis = intelligent_diagnostic_engine(st.session_state.symptoms)
+    pid = st.session_state.patient_id if st.session_state.patient_id else "ES-TEMP"
 
     st.markdown(
         f"""
         <div style="background-color: #1E5E3A; padding: 22px; border-radius: 12px; color: white; margin-bottom: 25px;">
             <h1 style="margin: 0; font-size: 26px; font-weight: bold;">🌿 EcoScan</h1>
-            <p style="margin: 6px 0 0 0; font-size: 16px; opacity: 0.9;">DIAGNOSTIC REPORT: Patient ID {patient_id}</p>
+            <p style="margin: 6px 0 0 0; font-size: 16px; opacity: 0.9;">DIAGNOSTIC REPORT: Patient ID {pid}</p>
         </div>
         """, unsafe_allow_html=True
     )
@@ -368,7 +375,7 @@ elif st.session_state.page == 5:
     with col_btn1:
         if st.button("💾 Save To Permanent Records"):
             detailed_complaint = f"[{diagnosis['disease']}] {st.session_state.symptoms}"
-            save_patient_record(patient_id, st.session_state.patient_name, st.session_state.patient_address, detailed_complaint)
+            save_patient_record(pid, st.session_state.patient_name, st.session_state.patient_address, detailed_complaint)
             st.success("✅ Saved to the Central Database Table below!")
             st.toast("Record updated successfully.")
             
