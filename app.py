@@ -370,8 +370,7 @@ elif st.session_state.page == 5:
             detailed_complaint = f"[{diagnosis['disease']}] {st.session_state.symptoms}"
             save_patient_record(patient_id, st.session_state.patient_name, st.session_state.patient_address, detailed_complaint)
             st.success("✅ Saved to the Central Database Table below!")
-            time.sleep(1)
-            st.rerun()
+            st.toast("Record updated successfully.")
             
     with col_btn2:
         if st.button("🏠 Start New Scan / Home"):
