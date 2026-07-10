@@ -1,405 +1,634 @@
-import streamlit as st
-import pandas as pd
-import time
-import os
-
-# --- 1. SET PAGE CONFIG & FILES ---
-st.set_page_config(page_title="EcoScan - Smart Health Assistant", page_icon="🌿", layout="centered")
-
-DATABASE_FILE = "ecoscan_records.csv"
-
-def load_patient_records():
-    if os.path.exists(DATABASE_FILE):
-        try:
-            df = pd.read_csv(DATABASE_FILE)
-            # Ensure columns exist before dropping duplicates or nulls
-            if "Full Name" in df.columns and "Patient ID" in df.columns:
-                df = df.dropna(subset=["Full Name", "Patient ID"])
-            return df
-        except:
-            pass
-    return pd.DataFrame(columns=["Patient ID", "Full Name", "Residential Address", "Diagnostic Analysis Log", "Timestamp"])
-
-def save_patient_record(p_id, name, address, symptoms):
-    df_existing = load_patient_records()
-    new_data = pd.DataFrame([{
-        "Patient ID": str(p_id),
-        "Full Name": str(name).strip(),
-        "Residential Address": str(address).strip(),
-        "Diagnostic Analysis Log": str(symptoms).strip(),
-        "Timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-    }])
-    df_combined = pd.concat([df_existing, new_data], ignore_index=True)
-    df_combined.to_csv(DATABASE_FILE, index=False)
-
-# INITIALIZE PAGE SYSTEM
-if "page" not in st.session_state:
-    st.session_state.page = 1
-if "patient_name" not in st.session_state:
-    st.session_state.patient_name = ""
-if "patient_address" not in st.session_state:
-    st.session_state.patient_address = ""
-if "symptoms" not in st.session_state:
-    st.session_state.symptoms = ""
-if "patient_id" not in st.session_state:
-    st.session_state.patient_id = ""
-
-def generate_patient_id():
-    if st.session_state.patient_name.strip():
-        clean_name = "".join(e for e in st.session_state.patient_name if e.isalnum())
-        prefix = clean_name[:2].upper() if len(clean_name) >= 2 else "PT"
-    else:
-        prefix = "ES"
-    return f"{prefix}-{time.strftime('%M%S')}"
-
-# --- 2. PREMIUM CSS DESIGN STYLING ---
-st.markdown(
-    """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoScan - Advanced AI Medical Diagnostics</title>
+    <!-- Google Fonts for Professional Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-    .stApp { background-color: #F4F7F5 !important; }
-    .metric-box {
-        background-color: white;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.05);
-        margin-bottom: 15px;
-    }
-    .metric-title { color: #6C757D; font-size: 13px; font-weight: 600; text-transform: uppercase; }
-    .metric-value-green { color: #1E5E3A; font-size: 24px; font-weight: bold; }
-    .metric-value-accent { color: #28A745; font-size: 24px; font-weight: bold; }
-    .metric-value-warning { color: #D9381E; font-size: 24px; font-weight: bold; }
-    .metric-value-critical { color: #A61C1C; font-size: 24px; font-weight: bold; }
-    
-    .stButton>button {
-        background-color: #1E5E3A !important;
-        color: white !important;
-        border-radius: 8px !important;
-        font-weight: bold !important;
-        padding: 12px 24px !important;
-        width: 100%;
-        border: none !important;
-    }
-    .stButton>button:hover { background-color: #144026 !important; }
-    
-    label {
-        color: #1E5E3A !important;
-        font-weight: bold !important;
-        font-size: 16px !important;
-        margin-bottom: 5px !important;
-        display: block !important;
-    }
+        :root {
+            --primary-green: #2ecc71;
+            --dark-green: #1b4d3e;
+            --light-green: #e8f5e9;
+            --accent-green: #27ae60;
+            --bg-dark: #0f201b;
+            --text-light: #ffffff;
+            --text-dark: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 90vh;
+            background: linear-gradient(135deg, #142c24 0%, #0b1a15 100%);
+            border: 2px solid var(--primary-green);
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(46, 204, 113, 0.2);
+            overflow-y: auto;
+            position: relative;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Hide scrollbars but keep functionality */
+        .app-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .app-container::-webkit-scrollbar-thumb {
+            background: var(--primary-green);
+            border-radius: 10px;
+        }
+
+        .page {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Reusable Components */
+        .brand-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .brand-logo {
+            font-size: 2.5rem;
+            color: var(--primary-green);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .brand-logo i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--accent-green) 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: auto;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(46, 204, 113, 0.5);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
+        }
+
+        /* Page 1: Welcome */
+        #page1 {
+            justify-content: center;
+            text-align: center;
+        }
+        .tagline {
+            color: #a2b4af;
+            font-size: 1rem;
+            margin-bottom: 40px;
+        }
+        .dev-badge {
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid var(--primary-green);
+            padding: 12px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+        .dev-badge p {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #a2b4af;
+        }
+        .dev-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-green);
+        }
+
+        /* Page 3: Symptoms Grid */
+        .symptoms-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .symptom-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(46, 204, 113, 0.2);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .symptom-card i {
+            font-size: 1.5rem;
+            color: var(--primary-green);
+            margin-bottom: 8px;
+        }
+        .symptom-card.selected {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: var(--primary-green);
+            transform: scale(1.02);
+        }
+
+        /* Page 4: Scanner */
+        .scanner-box {
+            position: relative;
+            width: 200px;
+            height: 250px;
+            margin: 40px auto;
+            background: rgba(46, 204, 113, 0.05);
+            border: 2px dashed rgba(46, 204, 113, 0.4);
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .biometric-icon {
+            font-size: 6rem;
+            color: rgba(46, 204, 113, 0.4);
+            z-index: 1;
+        }
+        .scan-laser {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary-green);
+            box-shadow: 0 0 15px var(--primary-green);
+            animation: scanning 2s linear infinite;
+            z-index: 2;
+        }
+        @keyframes scanning {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
+        .scan-status {
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-green);
+            letter-spacing: 1px;
+        }
+
+        /* Page 5: Report Dashboard */
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid var(--primary-green);
+            padding: 15px;
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 15px;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .metric-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(46, 204, 113, 0.1);
+            padding: 10px;
+            text-align: center;
+            border-radius: 10px;
+        }
+        .metric-box span {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            display: block;
+        }
+
+        /* Records History Panel */
+        .records-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        .history-panel {
+            background: rgba(11, 26, 21, 0.95);
+            border-top: 2px solid var(--primary-green);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+            z-index: 10;
+            border-radius: 20px 20px 0 0;
+            padding: 0 20px;
+        }
+        .history-panel.open {
+            max-height: 70%;
+            padding: 20px;
+            overflow-y: auto;
+        }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+</head>
+<body>
 
-def go_to_page(page_num):
-    st.session_state.page = page_num
-    st.rerun()
-
-def reset_app():
-    st.session_state.patient_name = ""
-    st.session_state.patient_address = ""
-    st.session_state.symptoms = ""
-    st.session_state.patient_id = ""
-    st.session_state.page = 1
-    st.rerun()
-
-# --- 3. HIGH-CAPACITY ADVANCED DIAGNOSTIC MAPPING DATABASE ---
-DISEASE_DATABASE = {
-    "Hepatic System (Liver Diseases)": {
-        "keywords": ["liver", "jaundice", "yellow eyes", "cirrhosis", "hepatitis", "dark urine", "upper right abdomen pain"],
-        "disease": "Suspected Hepatic Dysfunction / Liver Insufficiency Risk",
-        "status": "CRITICAL RISK",
-        "heart_rate": "84 bpm",
-        "assessment": "Bilirubin Clearance Issue",
-        "color_class": "metric-value-critical",
-        "chart_data": [45, 52, 60, 75, 88, 82, 85, 84],
-        "advice": """
-            - **Immediate Clinical Action:** Obtain an urgent Liver Function Test (LFT) panel (ALT, AST, Bilirubin levels) and an abdominal ultrasound.
-            - **Dietary Exclusions:** Stop alcohol, fried foods, and processed fats instantly to reduce liver metabolic load.
-            - **Warning:** Avoid unprescribed herbs or heavy drug compounds as the liver's detoxification path is strained. Seek immediate physician management.
-        """
-    },
-    "Gastrointestinal Epidemic (Cholera)": {
-        "keywords": ["cholera", "watery stool", "rice water", "severe diarrhea", "dehydration", "vomit"],
-        "disease": "CRITICAL EMERGENCY: Suspected Acute Vibrio Cholerae Infection",
-        "status": "SEVERE EMERGENCY",
-        "heart_rate": "115 bpm (Tachycardia)",
-        "assessment": "Severe Hypovolemia",
-        "color_class": "metric-value-critical",
-        "chart_data": [50, 70, 90, 105, 112, 108, 120, 115],
-        "advice": """
-            - **🚨 Immediate Life-Saving Action:** Cholera can kill within hours due to fluid collapse. Go to an isolation ward immediately.
-            - **Hydration Reconstitution:** Rehydrate continuously using standard Oral Rehydration Salts (ORS). If unavailable, drink 1 liter of safe water mixed with 6 teaspoons of sugar and 1/2 teaspoon of salt.
-            - **Infection Precaution:** Use chlorinated water and practice strict hand hygiene to stop immediate transmission.
-        """
-    },
-    "Renal System (Kidney Diseases)": {
-        "keywords": ["kidney", "renal", "foamy urine", "swollen feet", "edema", "blood in urine", "flank pain"],
-        "disease": "Suspected Nephrological Condition / Renal System Strain",
-        "status": "High Risk",
-        "heart_rate": "90 bpm (Elevated BP Risk)",
-        "assessment": "Fluid Retention Profile",
-        "color_class": "metric-value-warning",
-        "chart_data": [55, 62, 70, 84, 92, 88, 91, 90],
-        "advice": """
-            - **Clinical Diagnostics:** Require urgent Serum Creatinine, Blood Urea Nitrogen (BUN), and urinalysis to measure kidney filtration rate (eGFR).
-            - **Fluid & Electrolyte Caution:** Monitor daily fluid input carefully and strictly limit dietary sodium/salt and excess proteins.
-            - **Expert Attention:** Consult a nephrologist if structural abnormalities or high protein losses are found in the urine.
-        """
-    },
-    "Cardiovascular System (Heart Attack / Hypertension)": {
-        "keywords": ["heart attack", "chest pain", "hypertension", "high blood pressure", "left arm pain", "angina", "palpitations"],
-        "disease": "ACUTE CRISIS: Suspected Coronary Syndrome or Severe Hypertension",
-        "status": "CRITICAL EMERGENCY",
-        "heart_rate": "102 bpm",
-        "assessment": "Ischemic Cardiac Strain",
-        "color_class": "metric-value-critical",
-        "chart_data": [60, 75, 90, 105, 98, 104, 100, 102],
-        "advice": """
-            - **🚨 Red Alert:** Call emergency responders immediately. Do not exercise, panic, or attempt to walk.
-            - **First Aid Measure:** If prescribed by emergency dispatchers, chew a standard adult aspirin tablet to improve vascular flow.
-            - **Hospital Screening:** Requires an immediate electrocardiogram (ECG/EKG) and a Troponin blood check at an emergency unit.
-        """
-    },
-    "Endocrine System (Diabetes / Hyperglycemia)": {
-        "keywords": ["diabetes", "sugar", "frequent urination", "excessive thirst", "insulin", "diabetic", "slow healing wounds"],
-        "disease": "Suspected Hyperglycemia / Diabetes Mellitus Presentation",
-        "status": "Requires Review",
-        "heart_rate": "78 bpm",
-        "assessment": "Elevated Serum Glucose",
-        "color_class": "metric-value-warning",
-        "chart_data": [40, 50, 62, 70, 76, 75, 80, 78],
-        "advice": """
-            - **Action Plan:** Take a Fasting Blood Glucose (FBG) or HbA1c screening test immediately.
-            - **Nutrition Adjustment:** Cut off all simple sugars, sweet soft drinks, white bread, and refined starches. Introduce complex carbs and high fiber.
-            - **Physical Care:** Check feet daily for tiny unnoticeable injuries since diabetes slows down peripheral wound healing.
-        """
-    },
-    "Protozoan Infection (Malaria)": {
-        "keywords": ["malaria", "fever", "chills", "shivering", "sweating", "headache", "body pain"],
-        "disease": "Suspected Plasmodium Parasite Infection (Malaria)",
-        "status": "Needs Attention",
-        "heart_rate": "88 bpm (Febrile State)",
-        "assessment": "Elevated Core Temp",
-        "color_class": "metric-value-warning",
-        "chart_data": [40, 55, 62, 70, 85, 78, 90, 88],
-        "advice": """
-            - **Action Step:** Get a Malaria Rapid Diagnostic Test (RDT) or a thick blood smear film laboratory analysis.
-            - **Clinical Drug Administration:** Treat with standard artemisinin-based combination therapy (ACT) like Artemether-Lumefantrine if confirmed. Use Paracetamol for fever spikes.
-        """
-    },
-    "Respiratory System (Asthma / Pneumonia / Flu)": {
-        "keywords": ["cough", "catarrh", "asthma", "wheezing", "shortness of breath", "pneumonia", "difficulty breathing", "chest congestion", "flu"],
-        "disease": "Suspected Pulmonary Tract Aggravation / Respiratory Disease",
-        "status": "Needs Evaluation",
-        "heart_rate": "86 bpm",
-        "assessment": "Bronchial Airway Constriction",
-        "color_class": "metric-value-warning",
-        "chart_data": [30, 45, 58, 68, 80, 75, 88, 86],
-        "advice": """
-            - **Immediate Mitigation:** Use a rescue bronchodilator inhaler (Salbutamol) if wheezing from asthma. Try warm steam inhalation to loosen heavy congestion.
-            - **Urgent Warning:** If your fingernails or lips turn slightly blue, or you experience extreme air gasping, seek emergency oxygen therapy at a hospital immediately.
-        """
-    }
-}
-
-def intelligent_diagnostic_engine(symptoms_text):
-    text = symptoms_text.lower()
-    for system, profile in DISEASE_DATABASE.items():
-        if any(keyword in text for keyword in profile["keywords"]):
-            return profile
+    <div class="app-container">
+        
+        <!-- PAGE 1: WELCOME PAGE -->
+        <div id="page1" class="page active">
+            <div class="brand-header">
+                <div class="brand-logo"><i class="fa-solid fa-leaf"></i> EcoScan</div>
+                <p class="tagline">Next-Generation AI Bio-Diagnostics</p>
+            </div>
             
-    return {
-        "disease": "Condition Metrics Clear / Normal Baseline Profile",
-        "status": "Stable & Sound",
-        "heart_rate": "72 bpm",
-        "assessment": "Physiologically Healthy",
-        "color_class": "metric-value-accent",
-        "chart_data": [20, 38, 29, 48, 56, 42, 68, 32],
-        "advice": """
-            - **App Evaluation Profile:** Your vital signs and entered physical symptoms match normal clinical baselines.
-            - **Judges Testing Reference Note:** This system uses an advanced dictionary dataset scanner. To simulate specific target profiles for validation, input key symptoms like: *liver disease, yellow eyes, jaundice, cholera, watery stool, chest pain, appendix, or asthma symptoms.*
-            - **General Health:** Maintain clean hydration (3 liters daily) and a balanced nutritional routine.
-        """
-    }
-
-# ==========================================
-# PAGE MAIN NAVIGATION SCREENS
-# ==========================================
-
-# PAGE 1: OPENING PAGE
-if st.session_state.page == 1:
-    st.markdown(
-        """
-        <div style="background-color: #1E5E3A; padding: 35px; border-radius: 12px; color: white; text-align: center; margin-bottom: 25px;">
-            <h1 style="margin: 0; font-size: 34px; font-weight: bold;">🌟 Welcome to EcoScan</h1>
-            <p style="margin: 8px 0 0 0; font-size: 18px; opacity: 0.9; font-weight: 500;">Next-Generation Smart Health Assistant</p>
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
-    
-    st.markdown(
-        """
-        <div style="background-color: white; padding: 20px; border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.03); margin-bottom: 30px; border-left: 5px solid #28A745; text-align: center;">
-            <h3 style="color: #1E5E3A; margin-top: 0; font-size: 22px;">Developed by: Salihu Idris</h3>
-            <p style="color: #4A5568; font-style: italic; font-size: 14px; margin-bottom: 15px;">Participant, Young Innovation Challenge</p>
-            <hr style="border: 0; border-top: 1px solid #E2E8F0;">
-            <p style="margin: 10px 0 0 0; color: #718096; line-height: 1.6; font-size: 14.5px;">
-                EcoScan features intelligent symptom analysis and digital scanning simulation to provide immediate healthcare advice.
-            </p>
-        </div>
-        """, unsafe_allow_html=True
-    )
-    
-    if st.button("Get Started / Enter App 🚀"):
-        go_to_page(2)
-
-# PAGE 2: PATIENT REGISTRATION FORM
-elif st.session_state.page == 2:
-    st.markdown("<h2 style='color:#1E5E3A;'>📝 Page 2: Patient Registration Form</h2>", unsafe_allow_html=True)
-    
-    st.session_state.patient_name = st.text_input("Full Name of the Patient:", value=st.session_state.patient_name)
-    st.session_state.patient_address = st.text_area("Patient Address:", value=st.session_state.patient_address)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("⬅️ Back To Home"): go_to_page(1)
-    with col2:
-        if st.button("Next ➡️"):
-            if st.session_state.patient_name.strip() and st.session_state.patient_address.strip():
-                # Fix: Generate and lock the Patient ID here so it doesn't change later
-                st.session_state.patient_id = generate_patient_id()
-                go_to_page(3)
-            else:
-                st.error("⚠️ Please enter Name and Address before you proceed.")
-
-# PAGE 3: PATIENT ILLNESS DETAILS
-elif st.session_state.page == 3:
-    st.markdown("<h2 style='color:#1E5E3A;'>🏥 Page 3: Body Condition Details</h2>", unsafe_allow_html=True)
-    st.info(f"📋 Patient: {st.session_state.patient_name}")
-    
-    st.session_state.symptoms = st.text_area(
-        "What are you feeling in your body regarding this illness?",
-        value=st.session_state.symptoms,
-        placeholder="Try typing words like: liver disease, yellow eyes, cholera, watery stool, severe chest pain..."
-    )
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("⬅️ Go Back"): go_to_page(2)
-    with col2:
-        if st.button("Next ➡️"):
-            if st.session_state.symptoms.strip(): go_to_page(4)
-            else: st.error("Please write what you are feeling in your body.")
-
-# PAGE 4: SCANNING INTERFACE
-elif st.session_state.page == 4:
-    st.markdown("<h2 style='color:#1E5E3A;'>🧬 Page 4: Biometric Fingerprint Scanner</h2>", unsafe_allow_html=True)
-    st.write("Touch the circle below to start scanning.")
-    
-    st.markdown(
-        """
-        <div style='display: flex; justify-content: center; align-items: center; margin: 30px 0;'>
-            <div style='width: 140px; height: 140px; background: radial-gradient(circle, #2CE062 0%, #1E5E3A 100%); 
-            border-radius: 50%; display: flex; justify-content: center; align-items: center; 
-            box-shadow: 0px 0px 25px rgba(44, 224, 98, 0.6); color: white; font-weight: bold; font-size: 14px; text-align:center;'>
-                ☝️ PLACE<br>FINGER
+            <button class="btn" onclick="navigateTo(2)">Launch Assessment</button>
+            
+            <div class="dev-badge">
+                <p>Designed & Developed By</p>
+                <div class="dev-name">Salihu Idris</div>
+                <small style="color: var(--primary-green); font-size: 0.7rem;">Young Innovation Challenge Competitor</small>
             </div>
         </div>
-        """, unsafe_allow_html=True
-    )
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("⬅️ Go Back"): go_to_page(3)
-    with col2:
-        if st.button("START SCANNING NOW"):
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            for percent in range(0, 101, 25):
-                time.sleep(0.4)
-                progress_bar.progress(percent)
-                status_text.text(f"Scanning fingerprint and analyzing vital signs... {percent}%")
+
+        <!-- PAGE 2: PATIENT INFO -->
+        <div id="page2" class="page">
+            <div class="brand-header">
+                <h3>Patient Intake</h3>
+                <p style="color: #a2b4af; font-size: 0.85rem;">Please enter authentication details</p>
+            </div>
             
-            st.success("✅ Analysis completed successfully!")
-            time.sleep(0.5)
-            go_to_page(5)
+            <div class="form-group" style="margin-top: 20px;">
+                <label><i class="fa-solid fa-user"></i> Full Name</label>
+                <input type="text" id="patientName" placeholder="e.g. John Doe" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-location-dot"></i> Residential Address</label>
+                <input type="text" id="patientAddress" placeholder="e.g. State Road, Kano" required>
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-venus-mars"></i> Gender</label>
+                <select id="patientGender">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
 
-# PAGE 5: DIAGNOSTIC DASHBOARD & RESULTS
-elif st.session_state.page == 5:
-    diagnosis = intelligent_diagnostic_engine(st.session_state.symptoms)
-    pid = st.session_state.patient_id if st.session_state.patient_id else "ES-TEMP"
-
-    st.markdown(
-        f"""
-        <div style="background-color: #1E5E3A; padding: 22px; border-radius: 12px; color: white; margin-bottom: 25px;">
-            <h1 style="margin: 0; font-size: 26px; font-weight: bold;">🌿 EcoScan</h1>
-            <p style="margin: 6px 0 0 0; font-size: 16px; opacity: 0.9;">DIAGNOSTIC REPORT: Patient ID {pid}</p>
+            <button class="btn" onclick="validateAndProceedToSymptoms()">Proceed to Symptoms</button>
         </div>
-        """, unsafe_allow_html=True
-    )
-    
-    row1_col1, row1_col2 = st.columns(2)
-    row2_col1, row2_col2 = st.columns(2)
-    
-    with row1_col1:
-        st.markdown('<div class="metric-box"><div class="metric-title">Biometric:</div><div class="metric-value-green">VERIFIED</div></div>', unsafe_allow_html=True)
-    with row1_col2:
-        st.markdown(f'<div class="metric-box"><div class="metric-title">Heart Rate:</div><div class="{diagnosis["color_class"]}">{diagnosis["heart_rate"]}</div></div>', unsafe_allow_html=True)
-    with row2_col1:
-        st.markdown(f'<div class="metric-box"><div class="metric-title">Vitals Status:</div><div class="{diagnosis["color_class"]}">{diagnosis["status"]}</div></div>', unsafe_allow_html=True)
-    with row2_col2:
-        st.markdown(f'<div class="metric-box"><div class="metric-title">Assessment:</div><div class="{diagnosis["color_class"]}">{diagnosis["assessment"]}</div></div>', unsafe_allow_html=True)
 
-    st.markdown("<h3 style='color:#1E5E3A;'>Biometric Scan Analysis Curve</h3>", unsafe_allow_html=True)
-    st.area_chart(pd.DataFrame(diagnosis["chart_data"], columns=['Vitals Level']), color="#1E5E3A")
-    
-    st.markdown(
-        f"""
-        <div style="background-color: #FFF3CD; padding: 20px; border-radius: 12px; border-left: 6px solid #FFC107; box-shadow: 0px 4px 12px rgba(0,0,0,0.04); margin-bottom: 20px;">
-            <h4 style="color:#856404; margin-top:0; font-size: 18px;">🩺 Detected Medical Profile:</h4>
-            <p style="font-size: 19px; font-weight: bold; color: #A61C1C; margin: 5px 0;">{diagnosis["disease"]}</p>
+        <!-- PAGE 3: SYMPTOMS SELECTION -->
+        <div id="page3" class="page">
+            <div class="brand-header">
+                <h3>Symptom Matrix</h3>
+                <p style="color: #a2b4af; font-size: 0.85rem;">Select all indicators currently experienced</p>
+            </div>
+
+            <div class="symptoms-container">
+                <div class="symptom-card" data-symptom="Fever" onclick="toggleSymptom(this)">
+                    <i class="fa-solid fa-temperature-high"></i>
+                    <p>High Fever</p>
+                </div>
+                <div class="symptom-card" data-symptom="Cough" onclick="toggleSymptom(this)">
+                    <i class="fa-solid fa-head-side-cough"></i>
+                    <p>Dry Cough</p>
+                </div>
+                <div class="symptom-card" data-symptom="Headache" onclick="toggleSymptom(this)">
+                    <i class="fa-solid fa-brain"></i>
+                    <p>Headache</p>
+                </div>
+                <div class="symptom-card" data-symptom="Fatigue" onclick="toggleSymptom(this)">
+                    <i class="fa-solid fa-battery-empty"></i>
+                    <p>Fatigue</p>
+                </div>
+                <div class="symptom-card" data-symptom="Nausea" onclick="toggleSymptom(this)">
+                    <i class="fa-solid fa-stomach"></i>
+                    <p>Nausea</p>
+                </div>
+                <div class="symptom-card" data-symptom="Chills" onclick="toggleSymptom(this)">
+                    <i class="fa-solid fa-snowflake"></i>
+                    <p>Chills</p>
+                </div>
+            </div>
+
+            <button class="btn" onclick="startAutomatedScan()">Initiate Diagnostic Scan</button>
         </div>
-        """, unsafe_allow_html=True
-    )
 
-    st.markdown("<h3 style='color:#1E5E3A;'>📋 Recommended Medical Advice & Care Plan</h3>", unsafe_allow_html=True)
-    st.info(diagnosis["advice"])
+        <!-- PAGE 4: BIOMETRIC SCANNING -->
+        <div id="page4" class="page" style="justify-content: center;">
+            <div class="brand-header">
+                <h3>Biometric Analysis</h3>
+                <p style="color: #a2b4af; font-size: 0.85rem;">Place finger onto device screen area</p>
+            </div>
 
-    st.write("")
-    col_btn1, col_btn2 = st.columns(2)
-    
-    with col_btn1:
-        if st.button("💾 Save To Permanent Records"):
-            detailed_complaint = f"[{diagnosis['disease']}] {st.session_state.symptoms}"
-            save_patient_record(pid, st.session_state.patient_name, st.session_state.patient_address, detailed_complaint)
-            st.success("✅ Saved to the Central Database Table below!")
-            st.toast("Record updated successfully.")
+            <div class="scanner-box">
+                <div class="scan-laser"></div>
+                <i class="fa-solid fa-fingerprint biometric-icon"></i>
+            </div>
+
+            <div class="scan-status" id="scanStatus">DETECTING BIOMETRICS...</div>
+            <p style="text-align: center; font-size: 0.8rem; color:#a2b4af; margin-top: 10px;">Keep still. AI is capturing pulse & oxygenation trends automatically.</p>
+        </div>
+
+        <!-- PAGE 5: AI DIAGNOSIS REPORT -->
+        <div id="page5" class="page">
+            <div class="brand-header">
+                <h3 style="color: var(--primary-green);"><i class="fa-solid fa-square-poll-horizontal"></i> Diagnostic Report</h3>
+                <p id="reportMeta" style="color: #a2b4af; font-size: 0.8rem;"></p>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-box">
+                    <p style="font-size:0.75rem; color:#a2b4af;">HEART RATE</p>
+                    <span id="resBpm">-- BPM</span>
+                </div>
+                <div class="metric-box">
+                    <p style="font-size:0.75rem; color:#a2b4af;">SPO2 LEVELS</p>
+                    <span id="resSpo2">-- %</span>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h4 style="color: var(--primary-green); font-size:0.9rem; margin-bottom: 5px;">Primary Assessment</h4>
+                <p id="resDiagnosis" style="font-size: 0.95rem; font-weight:600;"></p>
+            </div>
+
+            <div class="dashboard-card" style="border-left-color: #f1c40f;">
+                <h4 style="color: #f1c40f; font-size:0.9rem; margin-bottom: 5px;">Clinical Recommendations</h4>
+                <p id="resAdvice" style="font-size: 0.85rem; color:#e0e0e0;"></p>
+            </div>
+
+            <div class="dashboard-card" style="border-left-color: #3498db;">
+                <h4 style="color: #3498db; font-size:0.9rem; margin-bottom: 5px;">Preventative Measures</h4>
+                <p id="resPrevention" style="font-size: 0.85rem; color:#e0e0e0;"></p>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: auto;">
+                <button class="btn" style="flex: 2;" onclick="resetApp()">New Scan</button>
+                <button class="records-btn" style="margin: 0;" onclick="toggleHistory()"><i class="fa-solid fa-history"></i> Records</button>
+            </div>
+        </div>
+
+        <!-- HIDDEN RECORDS HISTORY DRAWER -->
+        <div id="historyPanel" class="history-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="color: var(--primary-green);"><i class="fa-solid fa-database"></i> Local Patient Database</h4>
+                <i class="fa-solid fa-times" style="cursor:pointer;" onclick="toggleHistory()"></i>
+            </div>
+            <div id="historyLogs">
+                <!-- Data dynamically inserted here -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AUDIO FOR SCI-FI EFFECT -->
+    <script>
+        let selectedSymptoms = [];
+        let currentPatient = {};
+
+        function navigateTo(pageNumber) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(`page${pageNumber}`).classList.add('active');
+        }
+
+        function validateAndProceedToSymptoms() {
+            const name = document.getElementById('patientName').value.trim();
+            const address = document.getElementById('patientAddress').value.trim();
+            const gender = document.getElementById('patientGender').value;
+
+            if(!name || !address) {
+                alert('Please provide complete patient demographics before scanning.');
+                return;
+            }
+
+            currentPatient = { name, address, gender };
+            navigateTo(3);
+        }
+
+        function toggleSymptom(element) {
+            const symptom = element.getAttribute('data-symptom');
+            if(element.classList.contains('selected')) {
+                element.classList.remove('selected');
+                selectedSymptoms = selectedSymptoms.filter(s => s !== symptom);
+            } else {
+                element.classList.add('selected');
+                selectedSymptoms.push(symptom);
+            }
+        }
+
+        function startAutomatedScan() {
+            navigateTo(4);
+            const statusText = document.getElementById('scanStatus');
             
-    with col_btn2:
-        if st.button("🏠 Start New Scan / Home"):
-            reset_app()
+            // Step 1: Simulating automatic detection (No interaction needed)
+            setTimeout(() => {
+                statusText.innerText = "BIOMETRIC FINGERPRINT LOCKED...";
+                statusText.style.color = "#f1c40f";
+            }, 1500);
 
-# ==========================================
-# 🗂️ MAIN CONTENT: LIVE PATIENT HISTORY LOG TABLE
-# ==========================================
-st.markdown("---")
-st.markdown("## 🗂️ Central Patient Registry Logbook")
-st.write("This table acts as a live ledger directly on the screen. Any entries saved will appear here instantly.")
+            // Step 2: Processing algorithms
+            setTimeout(() => {
+                statusText.innerText = "RUNNING CLINICAL DIAGNOSIS...";
+                statusText.style.color = "#3498db";
+            }, 3000);
 
-records_df = load_patient_records()
+            // Step 3: Compile Report
+            setTimeout(() => {
+                compileDiagnosticReport();
+            }, 5000);
+        }
 
-if not records_df.empty:
-    st.dataframe(records_df, use_container_width=True)
-    st.write("")
-    if st.button("🗑️ Wipe Registry Records Table"):
-        if os.path.exists(DATABASE_FILE):
-            os.remove(DATABASE_FILE)
-        st.success("Database records wiped clean!")
-        time.sleep(0.5)
-        st.rerun()
-else:
-    st.info("The medical history ledger is currently empty. Complete a diagnostic check and click 'Save To Permanent Records' to populate this spreadsheet.")
+        function compileDiagnosticReport() {
+            // Smart AI Engine Logic based on Combinations
+            let diagnosis = "General Fatigue & Exhaustion";
+            let advice = "Increase fluid intake, prioritize 8 hours of clinical sleep, and monitor body metrics.";
+            let prevention = "Engage in routine aerobic exercise, balance nutrition, and optimize workspace ergonomics.";
+            
+            // Clinical variations
+            if (selectedSymptoms.includes('Fever') && selectedSymptoms.includes('Chills')) {
+                diagnosis = "Suspected Acute Malaria or Viral Infection";
+                advice = "Urgent clinical validation required. Administer antipyretics under medical guidance.";
+                prevention = "Utilize insecticide-treated bed nets, clear stagnant water reservoirs, and use insect repellents.";
+            } else if (selectedSymptoms.includes('Cough') && selectedSymptoms.includes('Fever')) {
+                diagnosis = "Upper Respiratory Tract Infection Indicators";
+                advice = "Isolate temporarily, consume warm fluids, and consult for possible antibiotic/antiviral protocols.";
+                prevention = "Maintain meticulous hand hygiene, wear masks in congested spaces, and take annual influenza vaccinations.";
+            } else if (selectedSymptoms.includes('Headache') && selectedSymptoms.includes('Nausea')) {
+                diagnosis = "Acute Migraine vs Neurological Stress Response";
+                advice = "Rest in dark, noise-isolated environments. Avoid blue-light triggers immediately.";
+                prevention = "Track nutritional dietary triggers, strictly maintain hydration, and regulate stress levels.";
+            } else if (selectedSymptoms.length > 0) {
+                diagnosis = `Mild Symptomatic Strain (${selectedSymptoms.join(', ')})`;
+                advice = "Symptomatic treatment advised. Rest and high-protein nutrition.";
+                prevention = "Boost natural immunity via Vitamin C and Zinc supplements.";
+            }
+
+            // Generate randomized realistic biometrics
+            const bpm = Math.floor(Math.random() * (105 - 68 + 1)) + 68;
+            const spo2 = Math.floor(Math.random() * (100 - 94 + 1)) + 94;
+
+            // Update UI Elements
+            document.getElementById('reportMeta').innerText = `Patient: ${currentPatient.name} | ${currentPatient.gender}`;
+            document.getElementById('resBpm').innerText = `${bpm} BPM`;
+            document.getElementById('resSpo2').innerText = `${spo2}%`;
+            document.getElementById('resDiagnosis').innerText = diagnosis;
+            document.getElementById('resAdvice').innerText = advice;
+            document.getElementById('resPrevention').innerText = prevention;
+
+            // Commit to Local History Database
+            const record = {
+                id: Date.now(),
+                name: currentPatient.name,
+                address: currentPatient.address,
+                gender: currentPatient.gender,
+                symptoms: selectedSymptoms.join(', ') || 'None Reported',
+                diagnosis: diagnosis,
+                bpm: bpm,
+                spo2: spo2,
+                date: new Date().toLocaleString()
+            };
+
+            let localHistory = JSON.parse(localStorage.getItem('ecoscan_history')) || [];
+            localHistory.unshift(record);
+            localStorage.setItem('ecoscan_history', JSON.stringify(localHistory));
+
+            // Proceed to Output View
+            navigateTo(5);
+        }
+
+        function toggleHistory() {
+            const panel = document.getElementById('historyPanel');
+            panel.classList.toggle('open');
+            if(panel.classList.contains('open')) {
+                renderHistory();
+            }
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyLogs');
+            let localHistory = JSON.parse(localStorage.getItem('ecoscan_history')) || [];
+            
+            if(localHistory.length === 0) {
+                container.innerHTML = `<p style="color:#a2b4af; font-size:0.85rem; text-align:center; padding:20px;">No patient records registered on this cloud instance.</p>`;
+                return;
+            }
+
+            container.innerHTML = localHistory.map(item => `
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(46,204,113,0.2); padding:12px; border-radius:8px; margin-bottom:10px; font-size:0.8rem;">
+                    <div style="display:flex; justify-content:space-between; color:var(--primary-green); font-weight:bold;">
+                        <span>${item.name} (${item.gender})</span>
+                        <span style="font-size:0.7rem; color:#a2b4af;">${item.date}</span>
+                    </div>
+                    <p style="color:#e0e0e0; margin-top:4px;"><strong>Diagnosis:</strong> ${item.diagnosis}</p>
+                    <p style="color:#a2b4af; font-size:0.75rem;">Vitals: ${item.bpm}BPM | ${item.spo2}% SpO2 | Address: ${item.address}</p>
+                </div>
+            `).join('');
+        }
+
+        function resetApp() {
+            // Reset input values
+            document.getElementById('patientName').value = '';
+            document.getElementById('patientAddress').value = '';
+            document.getElementById('patientGender').selectedIndex = 0;
+            document.getElementById('scanStatus').innerText = "DETECTING BIOMETRICS...";
+            document.getElementById('scanStatus').style.color = "var(--primary-green)";
+            
+            // Clear selections
+            document.querySelectorAll('.symptom-card').forEach(card => card.classList.remove('selected'));
+            selectedSymptoms = [];
+            currentPatient = {};
+            
+            // Close drawer if open and return home
+            document.getElementById('historyPanel').classList.remove('open');
+            navigateTo(1);
+        }
+    </script>
+</body>
+</html>
